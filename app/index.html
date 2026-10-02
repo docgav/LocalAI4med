@@ -3,25 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IA locale – rédaction</title>
+<title>IA locale</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-  <h1>IA locale – rédaction</h1>
+  <h1>IA locale</h1>
+  <nav role="tablist">
+    <button role="tab" data-vue="redaction" aria-selected="true">Rédaction</button>
+    <button role="tab" data-vue="discussion" aria-selected="false">Discussion</button>
+  </nav>
+  <span id="info-dictee" class="discret">Dictée : touche Entrée dans la fenêtre « dictaphone »</span>
   <span id="etat-serveur" class="etat">Serveur : …</span>
 </header>
 
-<main>
+<main id="vue-redaction" class="vue grille">
   <section class="colonne">
     <div class="ligne">
       <label for="type">Document</label>
       <select id="type"></select>
     </div>
-    <div class="ligne entete-zone">
-      <label for="notes">Notes / dictée</label>
-      <span id="info-dictee" class="discret">Dictée : touche Entrée dans la fenêtre « dictaphone »</span>
-    </div>
+    <label for="notes">Notes / dictée</label>
     <textarea id="notes" placeholder="Dictez depuis la fenêtre noire, ou tapez vos notes ici…"></textarea>
     <div class="boutons">
       <button id="rediger" class="principal" title="Ctrl+Entrée">Rédiger</button>
@@ -48,10 +50,28 @@
   </section>
 </main>
 
+<main id="vue-discussion" class="vue" hidden>
+  <section class="colonne discussion">
+    <div id="fil" aria-live="polite"></div>
+    <div id="pieces"></div>
+    <textarea id="saisie" rows="3" placeholder="Votre message… (Entrée : envoyer, Maj+Entrée : retour à la ligne). Glissez ici des images ou des PDF."></textarea>
+    <div class="boutons">
+      <button id="envoyer" class="principal">Envoyer</button>
+      <button id="arreter-discussion" hidden>Arrêter</button>
+      <button id="joindre" title="Joindre des images, PDF ou fichiers texte">Joindre…</button>
+      <input id="fichier" type="file" multiple accept="image/*,.pdf,.txt,.md,.csv" hidden>
+      <span id="info-discussion" class="discret"></span>
+      <button id="nouvelle" class="danger">Nouvelle discussion</button>
+    </div>
+  </section>
+</main>
+
 <footer>
-  Brouillon généré localement : relecture obligatoire, en particulier des posologies.
-  Rien n'est envoyé hors de cet ordinateur ; « Tout effacer » puis « Q » dans la fenêtre dictaphone en fin de session.
+  Réponses générées localement : relecture obligatoire, en particulier des posologies.
+  Rien n'est envoyé hors de cet ordinateur ; effacez la page puis « Q » dans la fenêtre dictaphone en fin de session.
 </footer>
-<script src="app.js"></script>
+<script src="commun.js"></script>
+<script src="redaction.js"></script>
+<script src="discussion.js"></script>
 </body>
 </html>

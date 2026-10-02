@@ -6,7 +6,9 @@ Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
 
 ## Utilisation
 
-1. Double-cliquer sur `Demarrer.bat`. Le modèle se charge, puis la page s'ouvre dans le navigateur.
+1. Double-cliquer sur `Demarrer.bat`. Si les deux versions de Gemma sont présentes, taper `1` (E2B, rapide)
+   ou `2` (E4B, plus précis, 16 Go de RAM conseillés) ; sans réponse, E2B est choisi après 10 s.
+   Le modèle se charge, puis la page s'ouvre dans le navigateur.
 2. La fenêtre noire sert de **dictaphone** : `Entrée` pour dicter, `q` pour arrêter l'enregistrement.
    Le texte transcrit s'insère automatiquement dans « Notes / dictée ». On peut aussi taper les notes.
 3. Choisir le type de document, cliquer sur **Rédiger** (ou `Ctrl+Entrée`).
@@ -14,6 +16,18 @@ Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
 5. **Copier**, coller dans le DPI.
 6. En fin de session : **Tout effacer** dans la page, puis `Q` dans la fenêtre dictaphone
    (arrêt du serveur, effacement des dictées, vidage du presse-papier).
+
+### Onglet Discussion
+
+Échange libre avec l'IA, comme l'interface par défaut de llama.cpp. On peut joindre (bouton **Joindre…**,
+glisser-déposer ou coller) :
+- des **PDF** : le texte est extrait localement ; un PDF scanné est envoyé en images (3 premières pages) ;
+- des **images** (photo d'ordonnance, capture d'écran…) : nécessite le fichier `mmproj` du modèle
+  (voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md)). En haut à droite, « (images) » indique qu'il est chargé ;
+- des fichiers texte.
+
+La dictée s'insère dans l'onglet affiché. **Nouvelle discussion** efface tout. Une discussion trop longue
+dépasse la mémoire du modèle (`CONTEXTE`) : en commencer une nouvelle.
 
 Au premier lancement sur un poste, le micro est demandé (`scripts\micro.bat`, résultat dans `micro.txt`).
 Pour changer de micro : supprimer `micro.txt`.
@@ -27,9 +41,10 @@ IA/
 ├── config.bat            réglages (modèles, port, vocabulaire)
 ├── ressources/           * TOUS les fichiers téléchargés, réunis ici :
 │                           llamafile.exe, whisperfile.exe, ffmpeg.exe,
-│                           gemma-4-E2B-it-Q4_K_M.gguf, ggml-medium-q5_0.bin
+│                           gemma-4-E2B-it-Q4_K_M.gguf, ggml-medium-q5_0.bin,
+│                           (facultatifs) gemma-4-E4B-it-Q4_K_M.gguf, mmproj-E2B.gguf, mmproj-E4B.gguf
 │                           (+ config_perso.bat, facultatif)
-├── app/                  interface web (servie par llamafile)
+├── app/                  interface web (servie par llamafile) ; lib/pdfjs : lecture des PDF
 │   ├── prompts/          un fichier .txt par type de document
 │   └── dictee/           dernière transcription (temporaire, effacée à l'arrêt)
 ├── scripts/              dictee.bat, micro.ps1, serveur.bat, nettoyer.bat

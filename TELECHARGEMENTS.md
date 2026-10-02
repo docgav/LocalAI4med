@@ -9,6 +9,9 @@ votre ordinateur personnel. Aucun ne nécessite d'installation.
 |---|---|
 | `llamafile.exe` | ~ 300 Mo |
 | `gemma-4-E2B-it-Q4_K_M.gguf` | quelques Go |
+| `mmproj-E2B.gguf` (facultatif : images) | quelques centaines de Mo |
+| `gemma-4-E4B-it-Q4_K_M.gguf` (facultatif) | ~ 5 Go |
+| `mmproj-E4B.gguf` (facultatif : images) | quelques centaines de Mo |
 | `whisperfile.exe` | ~ 300 Mo |
 | `ggml-medium-q5_0.bin` | ~ 540 Mo |
 | `ffmpeg.exe` | ~ 100 Mo |
@@ -45,11 +48,25 @@ La commande doit afficher un numéro de version.
 Si le nom du fichier n'est pas exactement `gemma-4-E2B-it-Q4_K_M.gguf`, vous avez deux solutions :
 - renommer le fichier ;
 - ou indiquer son nom dans `ressources\config_perso.bat` (voir « Mettre à jour » dans le README), par exemple :
-  `set "MODELE_LLM=ressources\nom-du-fichier.gguf"`
+  `set "MODELE_2B=ressources\nom-du-fichier.gguf"`
 
 Le téléchargement peut demander un compte Hugging Face et l'acceptation de la licence Gemma.
 
-Ne prenez pas les modèles E4B : en Q4, ils sont trop lourds pour les postes de 8 Go de RAM.
+### Facultatif : version E4B (plus précise)
+
+Même démarche avec **`gemma-4-E4B-it-GGUF`**, fichier `Q4_K_M`, renommé `gemma-4-E4B-it-Q4_K_M.gguf`.
+Si les deux versions sont dans `ressources\`, `Demarrer.bat` propose de choisir. E4B demande environ
+16 Go de RAM : réservez-le à votre ordinateur personnel, gardez E2B pour les postes de l'hôpital.
+
+### Facultatif : lecture des images (fichiers mmproj)
+
+Pour envoyer des images à l'IA (onglet Discussion), il faut le « projecteur » du modèle.
+1. Dans le même dépôt Hugging Face que le modèle, téléchargez le fichier dont le nom commence par
+   **`mmproj`** (prendre la version `F16` ou `Q8_0` si plusieurs sont proposées).
+2. Renommez-le `mmproj-E2B.gguf` (ou `mmproj-E4B.gguf` pour la version E4B) et placez-le dans `ressources\`.
+
+Chaque mmproj ne fonctionne qu'avec son modèle. Sans ce fichier, tout fonctionne sauf les images
+(les PDF contenant du texte restent lisibles).
 
 ## 3. Modèle de transcription : Whisper medium
 

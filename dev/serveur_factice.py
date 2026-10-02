@@ -23,6 +23,9 @@ class Gestionnaire(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/health"):
             return self._json({"status": "ok"})
+        if self.path.startswith("/props"):
+            return self._json({"model_path": "ressources\\gemma-4-E2B-it-Q4_K_M.gguf",
+                               "modalities": {"vision": True, "audio": False}})
         self.path = self.path.split("?")[0]
         return super().do_GET()
 
@@ -31,8 +34,13 @@ class Gestionnaire(SimpleHTTPRequestHandler):
             return self.send_error(404)
         corps = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         messages = corps["messages"]
-        reponse = f"[Réponse factice : {len(messages)} messages, système de {len(messages[0]['content'])} caractères]\n\n" \
-                  f"Notes reçues : {messages[-1]['content']}"
+        dernier = messages[-1]["content"]
+        images = 0
+        if isinstance(dernier, list):
+            images = sum(1 for p in dernier if p.get("type") == "image_url")
+            dernier = " ".join(p.get("text", "") for p in dernier if p.get("type") == "text")
+        reponse = f"[Réponse factice : {len(messages)} messages, système de {len(messages[0]['content'])} " \
+                  f"caractères, {images} image(s)]\n\n**Reçu :** {dernier[:300]}"
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.end_headers()

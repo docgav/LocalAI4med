@@ -12,12 +12,34 @@ title IA locale - dictaphone
 if not exist "app\index.html" (echo [ERREUR] Dossier app incomplet : recopiez le contenu du ZIP. & pause & exit /b 1)
 if not exist "app\prompts\" (echo [ERREUR] Dossier app\prompts manquant : recopiez le contenu du ZIP. & pause & exit /b 1)
 if not exist "%LLAMAFILE%"  (echo [ERREUR] %LLAMAFILE% introuvable. & pause & exit /b 1)
-if not exist "%MODELE_LLM%" (echo [ERREUR] Modele introuvable : %MODELE_LLM% & pause & exit /b 1)
 if not exist "%WHISPERFILE%"    echo [ATTENTION] %WHISPERFILE% introuvable : dictee indisponible.
 if not exist "%MODELE_WHISPER%" echo [ATTENTION] %MODELE_WHISPER% introuvable : dictee indisponible.
 if not exist "%FFMPEG%"         echo [ATTENTION] %FFMPEG% introuvable : dictee indisponible.
 
 for %%F in ("%LLAMAFILE%") do set "PROC=%%~nxF"
+
+rem --- Choix du modele (2B / 4B) selon les fichiers presents ---
+set "OK2=" & set "OK4="
+if exist "%MODELE_2B%" set "OK2=1"
+if exist "%MODELE_4B%" set "OK4=1"
+if not defined OK2 if not defined OK4 (echo [ERREUR] Aucun modele trouve : %MODELE_2B% ou %MODELE_4B% & pause & exit /b 1)
+set "CHOIX=%MODELE_DEFAUT%"
+if not defined OK2 set "CHOIX=4B"
+if not defined OK4 set "CHOIX=2B"
+if not defined OK2 goto modele_choisi
+if not defined OK4 goto modele_choisi
+set "DEF=1"
+if /i "%MODELE_DEFAUT%"=="4B" set "DEF=2"
+echo.
+echo Choix du modele :
+echo   [1] Gemma 4 E2B : rapide, adapte aux postes de 8 Go de RAM
+echo   [2] Gemma 4 E4B : plus precis, 16 Go de RAM conseilles
+choice /c 12 /t 10 /d %DEF% /n /m "Tapez 1 ou 2 (choix par defaut dans 10 s) : "
+if errorlevel 2 (set "CHOIX=4B") else (set "CHOIX=2B")
+:modele_choisi
+if /i "%CHOIX%"=="4B" (set "LLM_ACTIF=%MODELE_4B%" & set "MMPROJ_ACTIF=%MMPROJ_4B%") else (set "LLM_ACTIF=%MODELE_2B%" & set "MMPROJ_ACTIF=%MMPROJ_2B%")
+echo Modele : %LLM_ACTIF%
+if exist "%MMPROJ_ACTIF%" (echo Images : activees) else (echo Images : desactivees ^(pas de %MMPROJ_ACTIF%^))
 if not exist journal mkdir journal
 if not exist dictees mkdir dictees
 if not exist app\dictee mkdir app\dictee
@@ -55,6 +77,7 @@ start "" "http://127.0.0.1:%PORT%/"
 cls
 echo ============================================================
 echo  IA locale prete : http://127.0.0.1:%PORT%/
+echo  Modele : %LLM_ACTIF%
 echo  Gardez cette fenetre ouverte : elle sert de dictaphone.
 echo  Le texte dicte s'insere automatiquement dans la page.
 echo ============================================================

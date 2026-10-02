@@ -21,6 +21,13 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
 - Tous les fichiers téléchargés (exécutables, modèles) sont dans `ressources/` (ignoré par git,
   sauf `A_LIRE.txt`), pour que les mises à jour par copie du ZIP n'y touchent pas.
   Réglages perso : `ressources/config_perso.bat`, appelé à la fin de `config.bat`.
+- Modèle : `Demarrer.bat` choisit E2B ou E4B (`choice`, selon les fichiers présents) et passe
+  `LLM_ACTIF` / `MMPROJ_ACTIF` à `scripts/serveur.bat` par l'environnement ; `--mmproj` seulement si le
+  fichier existe (images). La page lit `/props` (`model_path`, `modalities.vision`).
+- Interface `app/` en deux onglets dans une seule page : `commun.js` (API en streaming, onglets,
+  dictée, état), `redaction.js`, `discussion.js` (images redimensionnées en JPEG et envoyées en
+  `image_url` ; PDF lus par pdf.js 3.11 copié dans `app/lib/pdfjs`, scripts classiques, pas de .mjs).
+  Chaque onglet est dans un bloc `{ }` pour éviter les collisions de noms globaux.
 - `llamafile.exe --server --path app` (v0.10.6, basé sur llama-server) sert l'interface `app/`
   et l'API OpenAI `/v1/chat/completions` sur la même origine. `/health` renvoie 200 quand prêt.
 - whisperfile 0.10.6 est **CLI uniquement** (pas de whisper-server dans la distribution).

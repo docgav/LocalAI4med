@@ -8,7 +8,14 @@ rem ============================================================
 
 rem --- Modele de redaction (llamafile) ---
 set "LLAMAFILE=ressources\llamafile.exe"
-set "MODELE_LLM=ressources\gemma-4-E2B-it-Q4_K_M.gguf"
+rem Deux versions possibles. Si les deux sont presentes, un choix est propose au demarrage.
+rem Les fichiers mmproj (facultatifs) permettent d'envoyer des images a l'IA.
+set "MODELE_2B=ressources\gemma-4-E2B-it-Q4_K_M.gguf"
+set "MMPROJ_2B=ressources\mmproj-E2B.gguf"
+set "MODELE_4B=ressources\gemma-4-E4B-it-Q4_K_M.gguf"
+set "MMPROJ_4B=ressources\mmproj-E4B.gguf"
+rem Modele choisi par defaut (2B ou 4B) si aucune touche n'est pressee.
+set "MODELE_DEFAUT=2B"
 set "PORT=8080"
 rem Taille du contexte (tokens). 8192 suffit pour consignes + exemples + notes.
 set "CONTEXTE=8192"

@@ -16,12 +16,18 @@ body {
   font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
   display: flex; flex-direction: column; min-height: 100vh;
 }
-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
+header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 10px 16px; }
+#etat-serveur { margin-left: auto; }
+nav { display: flex; gap: 4px; }
+nav button { border-color: transparent; background: transparent; }
+nav button[aria-selected="true"] { background: var(--carte); border-color: var(--bord); font-weight: 600; }
 h1 { font-size: 18px; margin: 0; }
 .etat { font-size: 13px; color: var(--discret); }
 .etat.ok { color: var(--ok); } .etat.ko { color: var(--danger); }
-main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 16px; }
-@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+main { flex: 1; padding: 0 16px; }
+main[hidden] { display: none; }
+.grille { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grille { grid-template-columns: 1fr; } }
 .colonne {
   background: var(--carte); border: 1px solid var(--bord); border-radius: 8px;
   padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 70vh;
@@ -44,3 +50,22 @@ button:disabled { opacity: .5; cursor: default; }
 button.principal { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
 button.danger { color: var(--danger); margin-left: auto; }
 footer { padding: 10px 16px; font-size: 12px; color: var(--alerte); }
+
+/* Discussion */
+.discussion { max-width: 1000px; margin: 0 auto; height: calc(100vh - 110px); min-height: 400px; }
+#vue-discussion.survol .discussion { outline: 2px dashed var(--accent); }
+#fil { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px; }
+#saisie { flex: none; min-height: 70px; resize: vertical; }
+.bulle { max-width: 85%; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--bord); position: relative; }
+.bulle.user { align-self: flex-end; background: var(--fond); white-space: pre-wrap; }
+.bulle.assistant { align-self: flex-start; }
+.bulle img { max-width: 220px; max-height: 220px; display: block; margin-bottom: 6px; border-radius: 6px; }
+.bulle .corps p { margin: 0 0 6px; }
+.bulle .corps h4 { margin: 8px 0 4px; }
+.bulle .corps ul, .bulle .corps ol { margin: 0 0 6px; padding-left: 22px; }
+.bulle pre { background: var(--fond); padding: 8px; border-radius: 6px; overflow-x: auto; }
+.bulle .copier { font-size: 12px; padding: 2px 8px; margin-top: 4px; }
+#pieces { display: flex; flex-wrap: wrap; gap: 6px; }
+#pieces:empty { display: none; }
+.puce { font-size: 13px; background: var(--fond); border: 1px solid var(--bord); border-radius: 12px; padding: 2px 4px 2px 10px; display: inline-flex; align-items: center; gap: 4px; margin: 0 4px 4px 0; }
+.puce button { border: none; background: none; padding: 0 6px; }
