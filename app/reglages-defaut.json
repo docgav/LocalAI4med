@@ -15,6 +15,7 @@
     "threads": 0,
     "vocabulaire": "Consultation de neurologie."
   },
+  "archivage": true,
   "discussion": {
     "interface": "llamafile"
   },

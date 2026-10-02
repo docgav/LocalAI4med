@@ -58,6 +58,7 @@
     $('r-temperature').value = red.temperature ?? 0.3;
     $('r-longueur').value = red.longueur_max ?? 2048;
     $('r-reflexion').checked = red.afficher_reflexion !== false;
+    $('r-archivage').checked = r.archivage !== false;
     $('r-rapide').checked = tr.rapide !== false;
     $('r-fenetre').checked = !!tr.fenetre_adaptee;
     $('r-threads').value = tr.threads || 0;
@@ -97,6 +98,7 @@
         vocabulaire: $('r-vocabulaire').value.trim(),
       },
       discussion: { interface: choix ? choix.value : 'llamafile' },
+      archivage: $('r-archivage').checked,
       raccourcis: listes.raccourcis.lire(),
       dictionnaire_transcription: listes.dictionnaire_transcription.lire(),
       glossaire: listes.glossaire.lire(),

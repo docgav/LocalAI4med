@@ -12,6 +12,9 @@
   <nav role="tablist">
     <button role="tab" data-vue="redaction" aria-selected="true">Rédaction</button>
     <button role="tab" data-vue="discussion" aria-selected="false">Discussion</button>
+    <button role="tab" data-vue="synthese" aria-selected="false">Synthèse patient</button>
+    <button role="tab" data-vue="anonymisation" aria-selected="false">Anonymisation</button>
+    <button role="tab" data-vue="historique" aria-selected="false">Historique</button>
     <button role="tab" data-vue="personnaliser" aria-selected="false">Personnaliser</button>
   </nav>
   <div class="dictee">
@@ -101,6 +104,124 @@
   </section>
 </main>
 
+<main id="vue-synthese" class="vue" hidden>
+  <div class="trois-colonnes">
+    <section class="colonne">
+      <div class="ligne"><strong>Dossiers</strong><button id="sy-nouveau" class="principal">Nouveau</button></div>
+      <input id="sy-recherche" type="search" placeholder="Rechercher un dossier">
+      <div id="sy-liste" class="liste-defilante"></div>
+      <span id="sy-boite" class="avertissement"></span>
+      <span class="discret">Depuis un autre logiciel : <strong>Ctrl+Alt+T</strong> envoie le texte sélectionné,
+        <strong>Ctrl+Alt+P</strong> une capture d'une zone de l'écran, dans le dossier ouvert.</span>
+    </section>
+
+    <section class="colonne">
+      <p id="sy-vide" class="discret">Ouvrez un dossier ou créez-en un nouveau. Les dossiers sont enregistrés dans
+        <code>donnees\patients\</code> sur le disque chiffré. Utilisez un libellé non identifiant si possible.</p>
+      <div id="sy-dossier" hidden>
+        <div class="ligne">
+          <input id="sy-libelle" title="Libellé du dossier">
+          <button id="sy-supprimer" class="danger">Supprimer le dossier</button>
+        </div>
+        <div id="sy-zone" class="zone-depot">
+          <textarea id="sy-coller" rows="4" placeholder="Collez ici du texte (compte rendu, biologie…) ou une image, ou glissez des PDF / images."></textarea>
+          <div class="boutons">
+            <button id="sy-ajouter-texte">Ajouter le texte</button>
+            <button id="sy-fichiers">Ajouter des fichiers…</button>
+            <input id="sy-choix-fichiers" type="file" multiple accept="image/*,.pdf,.txt,.md" hidden>
+          </div>
+        </div>
+        <span id="sy-taille" class="discret"></span>
+        <div id="sy-elements" class="liste-defilante"></div>
+      </div>
+    </section>
+
+    <section class="colonne">
+      <strong>Outils</strong>
+      <button id="sy-resume" class="principal">Synthèse de l'histoire</button>
+      <div class="ligne"><input id="sy-question" placeholder="Question sur le dossier (Entrée pour envoyer)"><button id="sy-poser">Demander</button></div>
+      <div class="ligne"><select id="sy-type"></select><button id="sy-rediger">Rédiger</button></div>
+      <input id="sy-consignes" placeholder="Consignes complémentaires pour la rédaction (facultatif)">
+      <button id="sy-arreter" hidden>Arrêter</button>
+      <span id="sy-info" class="discret"></span>
+      <details id="sy-reflexion" hidden open><summary>Réflexion du modèle</summary><pre id="sy-reflexion-texte"></pre></details>
+      <div id="sy-sortie" class="sortie-texte" aria-live="polite"></div>
+      <div class="ligne entete-zone"><span id="sy-stats" class="discret"></span><button id="sy-copier">Copier</button></div>
+      <strong>Productions du dossier</strong>
+      <div id="sy-productions" class="liste-defilante courte"></div>
+    </section>
+  </div>
+</main>
+
+<main id="vue-anonymisation" class="vue grille" hidden>
+  <section class="colonne">
+    <strong>Anonymiser</strong>
+    <div class="grille-champs">
+      <label>Nom <input id="an-nom"></label>
+      <label>Prénom(s) <input id="an-prenom"></label>
+      <label>Date de naissance <input id="an-naissance" placeholder="jj/mm/aaaa"></label>
+    </div>
+    <label>Autres éléments à masquer (un par ligne : proches, adresse, n° de dossier…)
+      <textarea id="an-autres" rows="3"></textarea></label>
+    <div class="ligne options">
+      <label class="case"><input id="an-dates" type="checkbox"> toutes les dates</label>
+      <label class="case"><input id="an-tel" type="checkbox" checked> téléphones</label>
+      <label class="case"><input id="an-mail" type="checkbox" checked> e-mails</label>
+      <label class="case"><input id="an-nir" type="checkbox" checked> n° de sécurité sociale</label>
+    </div>
+    <textarea id="an-entree" placeholder="Collez le texte à anonymiser, ou ouvrez un fichier (texte ou PDF)."></textarea>
+    <div class="boutons">
+      <button id="an-ouvrir">Ouvrir un fichier…</button>
+      <input id="an-fichier" type="file" accept=".txt,.md,.pdf" hidden>
+      <button id="an-detecter" title="Le modèle repère les noms, lieux et identifiants et les ajoute à la liste">Détecter avec l'IA</button>
+      <button id="an-anonymiser" class="principal">Anonymiser</button>
+    </div>
+    <span id="an-info" class="discret"></span>
+  </section>
+  <section class="colonne">
+    <strong>Texte anonymisé</strong>
+    <textarea id="an-sortie" placeholder="Le texte anonymisé apparaîtra ici, précédé de son identifiant [ANON-…]."></textarea>
+    <div class="boutons"><button id="an-copier" class="principal">Copier</button></div>
+    <details><summary>Correspondances</summary><table class="table-correspondances"><tbody id="an-table"></tbody></table></details>
+    <hr>
+    <strong>Désanonymiser</strong>
+    <select id="an-choix-inverse"><option value="">Identifiant lu dans le texte</option></select>
+    <textarea id="an-entree-inverse" rows="5" placeholder="Collez un texte contenant des jetons ([NOM], [DATE_1]…) et son identifiant [ANON-…]."></textarea>
+    <div class="boutons"><button id="an-desanonymiser" class="principal">Désanonymiser</button><span id="an-info-inverse" class="discret"></span></div>
+    <textarea id="an-sortie-inverse" rows="5" placeholder="Texte rétabli."></textarea>
+    <div class="boutons"><button id="an-copier-inverse">Copier</button></div>
+  </section>
+</main>
+
+<main id="vue-historique" class="vue" hidden>
+  <div class="historique">
+    <section class="colonne">
+      <div class="ligne">
+        <select id="hi-type">
+          <option value="">Tous les documents</option>
+          <option value="redaction">Rédactions</option>
+          <option value="transcription">Transcriptions</option>
+          <option value="discussion">Discussions</option>
+          <option value="synthese">Synthèse patient</option>
+          <option value="anonymisation">Anonymisations</option>
+        </select>
+      </div>
+      <input id="hi-recherche" type="search" placeholder="Rechercher dans le contenu">
+      <span id="hi-info" class="discret"></span>
+      <div id="hi-liste" class="liste-defilante"></div>
+    </section>
+    <section class="colonne">
+      <strong id="hi-titre"></strong>
+      <pre id="hi-vue" class="sortie-texte"></pre>
+      <div class="boutons">
+        <button id="hi-copier" class="principal" hidden>Copier le document</button>
+        <button id="hi-reprendre" hidden>Reprendre dans Rédaction</button>
+        <button id="hi-supprimer" class="danger" hidden>Supprimer</button>
+      </div>
+    </section>
+  </div>
+</main>
+
 <main id="vue-personnaliser" class="vue" hidden>
   <section class="colonne personnaliser">
     <p id="perso-avertissement" class="avertissement" hidden>
@@ -121,6 +242,7 @@
           <span class="discret">0 = très fidèle aux notes, 1 = plus libre. Conseillé : 0,2 à 0,4.</span></label>
         <label>Longueur maximale (tokens) <input id="r-longueur" type="number" min="256" max="8192" step="256"></label>
         <label class="case"><input id="r-reflexion" type="checkbox"> Afficher la réflexion du modèle quand il y en a une</label>
+        <label class="case"><input id="r-archivage" type="checkbox"> Conserver automatiquement les documents produits (onglet Historique, dossier <code>donnees\archives\</code>)</label>
 
         <h3>Transcription</h3>
         <label class="case"><input id="r-rapide" type="checkbox"> Décodage rapide (recommandé ; décoché : un peu plus précis, 2 à 3 fois plus lent)</label>
@@ -200,5 +322,8 @@
 <script src="discussion.js"></script>
 <script src="modeles.js"></script>
 <script src="personnaliser.js"></script>
+<script src="synthese.js"></script>
+<script src="anonymisation.js"></script>
+<script src="historique.js"></script>
 </body>
 </html>

@@ -12,7 +12,6 @@
     zone: $('discussion-perso'), info: $('info-discussion'),
   };
 
-  const TAILLE_IMAGE = 1024;      // côté maximal des images envoyées (px)
   const MAX_CARACTERES = 15000;   // texte maximal par document joint (≈ 4000 tokens)
   const PAGES_SCANNEES = 3;       // pages d'un PDF scanné envoyées en image
 
@@ -20,6 +19,7 @@
   let historique = [];   // messages au format API
   let enAttente = [];    // pièces jointes du prochain message : {type: 'image', nom, url} | {type: 'texte', nom, contenu}
   let controleur = null;
+  let archiveDiscussion = null;   // fichier d'archive de la discussion en cours
 
   // Même message système que l'interface de llamafile.
   lireTexte('discussion-config.json')
@@ -121,74 +121,6 @@
     });
   }
 
-  function chargerImage(url) {
-    return new Promise((ok, ko) => {
-      const img = new Image();
-      img.onload = () => ok(img); img.onerror = () => ko(new Error('image illisible'));
-      img.src = url;
-    });
-  }
-
-  // Réduit l'image pour limiter le nombre de tokens et la mémoire utilisée.
-  async function imageVersJpeg(source) {
-    const img = await chargerImage(source);
-    const echelle = Math.min(1, TAILLE_IMAGE / Math.max(img.width, img.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * echelle); canvas.height = Math.round(img.height * echelle);
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.85);
-  }
-
-  function lireFichier(fichier, comme) {
-    return new Promise((ok, ko) => {
-      const r = new FileReader();
-      r.onload = () => ok(r.result); r.onerror = () => ko(r.error);
-      if (comme === 'url') r.readAsDataURL(fichier); else if (comme === 'texte') r.readAsText(fichier, 'utf-8'); else r.readAsArrayBuffer(fichier);
-    });
-  }
-
-  let pdfjsPret = null;
-  function chargerPdfjs() {
-    if (!pdfjsPret) {
-      pdfjsPret = new Promise((ok, ko) => {
-        const s = document.createElement('script');
-        s.src = 'lib/pdfjs/pdf.min.js';
-        s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdfjs/pdf.worker.min.js'; ok(window.pdfjsLib); };
-        s.onerror = () => ko(new Error('pdf.js introuvable (app/lib/pdfjs)'));
-        document.head.appendChild(s);
-      });
-    }
-    return pdfjsPret;
-  }
-
-  // Extrait le texte d'un PDF ; s'il n'en contient pas (scan), envoie les premières pages en image.
-  async function lirePdf(fichier) {
-    const pdfjs = await chargerPdfjs();
-    const doc = await pdfjs.getDocument({ data: await lireFichier(fichier, 'binaire'), isEvalSupported: false }).promise;
-    let texte = '';
-    for (let n = 1; n <= doc.numPages && texte.length < MAX_CARACTERES; n++) {
-      const page = await doc.getPage(n);
-      const contenu = await page.getTextContent();
-      texte += contenu.items.map((it) => it.str + (it.hasEOL ? '\n' : ' ')).join('') + '\n\n';
-    }
-    if (texte.trim().length > 20) return [{ type: 'texte', nom: fichier.name, contenu: texte }];
-    if (!serveur.vision) throw new Error(`${fichier.name} ne contient pas de texte (document scanné) et le modèle n'accepte pas les images.`);
-    const pages = [];
-    for (let n = 1; n <= Math.min(doc.numPages, PAGES_SCANNEES); n++) {
-      const page = await doc.getPage(n);
-      const vue = page.getViewport({ scale: 1 });
-      const echelle = TAILLE_IMAGE / Math.max(vue.width, vue.height);
-      const v = page.getViewport({ scale: echelle });
-      const canvas = document.createElement('canvas');
-      canvas.width = v.width; canvas.height = v.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport: v }).promise;
-      pages.push({ type: 'image', nom: `${fichier.name} p.${n}`, url: canvas.toDataURL('image/jpeg', 0.85) });
-    }
-    return pages;
-  }
-
   async function ajouterFichiers(liste) {
     for (const f of liste) {
       el.info.textContent = 'Lecture de ' + f.name + '…';
@@ -198,16 +130,7 @@
           if (window.transcrireFichierAudio) window.transcrireFichierAudio(f);
           continue;
         }
-        if (f.type.startsWith('image/')) {
-          if (!serveur.vision) throw new Error('le modèle a été lancé sans module image (fichier mmproj absent, voir TELECHARGEMENTS.md).');
-          enAttente.push({ type: 'image', nom: f.name, url: await imageVersJpeg(await lireFichier(f, 'url')) });
-        } else if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
-          enAttente.push(...await lirePdf(f));
-        } else if (f.type.startsWith('text/') || /\.(txt|md|csv)$/i.test(f.name)) {
-          enAttente.push({ type: 'texte', nom: f.name, contenu: await lireFichier(f, 'texte') });
-        } else {
-          throw new Error('format non pris en charge (images, PDF, texte ou audio).');
-        }
+        enAttente.push(...await lireDocument(f, { maxCaracteres: MAX_CARACTERES, pagesScannees: PAGES_SCANNEES }));
       } catch (e) {
         alert(f.name + ' : ' + e.message);
       }
@@ -271,7 +194,14 @@
           (/context|contexte|exceed/i.test(e.message) ? '\n\nLa discussion est trop longue : commencez une nouvelle discussion ou joignez un document plus court.' : ''));
       }
     } finally {
-      if (recu) historique.push({ role: 'assistant', content: recu });
+      if (recu) {
+        historique.push({ role: 'assistant', content: recu });
+        // Archivage de la discussion (texte seulement, images retirées), mise à jour à chaque réponse.
+        const messagesTexte = historique.map((m) => ({ role: m.role, content: typeof m.content === 'string' ? m.content
+          : m.content.filter((p) => p.type === 'text').map((p) => p.text).join('\n') + ' [image(s) jointe(s)]' }));
+        const titre = messagesTexte[0] ? messagesTexte[0].content.slice(0, 80) : 'Discussion';
+        archiveDiscussion = await archiver('discussion', titre, { messages: messagesTexte }, archiveDiscussion) || archiveDiscussion;
+      }
       else historique.pop();  // échec sans réponse : on retire la question pour pouvoir la renvoyer
       controleur = null;
       el.envoyer.disabled = false; el.arreter.hidden = true;
@@ -286,7 +216,7 @@
   el.nouvelle.addEventListener('click', () => {
     if (historique.length && !confirm('Effacer la discussion en cours ?')) return;
     if (controleur) controleur.abort();
-    historique = []; enAttente = []; afficherPieces();
+    historique = []; enAttente = []; afficherPieces(); archiveDiscussion = null;
     el.fil.innerHTML = ''; el.saisie.value = ''; el.info.textContent = '';
   });
 

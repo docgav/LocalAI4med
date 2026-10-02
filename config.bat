@@ -45,6 +45,12 @@ set "PORT_DICTEE=8081"
 rem Audio des dictees (dictees\*.wav) : 0 = efface en fin de session, 1 = conserve.
 set "CONSERVER_AUDIO=0"
 
+rem --- Raccourcis clavier globaux (mode complet) : Ctrl+Alt+<touche> dans n'importe quel logiciel.
+rem TOUCHE_TEXTE envoie le texte selectionne, TOUCHE_IMAGE une capture d'ecran, a la Synthese patient.
+set "CAPTEUR=1"
+set "TOUCHE_TEXTE=T"
+set "TOUCHE_IMAGE=P"
+
 rem --- Navigateur : 1 = fenetre InPrivate d'Edge (historique des discussions efface a la fermeture).
 set "NAVIGATEUR_PRIVE=1"
 

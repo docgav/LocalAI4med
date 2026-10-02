@@ -15,6 +15,7 @@
   let conversation = null;     // messages de la dernière rédaction, pour « Modifier »
   let versionPrecedente = null;
   let controleur = null;       // AbortController de la génération en cours
+  let archive = null;          // rédaction en cours, enregistrée dans donnees/archives
 
   async function chargerModeles() {
     let docs = [];
@@ -119,7 +120,13 @@
     if (!notes) return el.notes.focus();
     memoriserVersion();
     const messages = construireMessages(modele, notes);
-    if (await generer(messages) !== null) conversation = messages;
+    const document = await generer(messages);
+    if (document !== null) {
+      conversation = messages;
+      // Archivage (donnees/archives) : une archive par rédaction, mise à jour à chaque modification.
+      archive = { modele: modele.titre, notes, versions: [document] };
+      archive.fichier = await archiver('redaction', `${modele.titre} – ${notes.slice(0, 60)}`, archive);
+    }
   }
 
   async function affiner() {
@@ -132,7 +139,14 @@
       { role: 'assistant', content: actuel },
       { role: 'user', content: 'Modifie le document selon cette consigne, et renvoie le document complet : ' + consigne },
     );
-    if (await generer(messages) !== null) { conversation = messages; el.consigne.value = ''; }
+    const document = await generer(messages);
+    if (document !== null) {
+      conversation = messages; el.consigne.value = '';
+      if (archive) {
+        archive.versions.push(`[Modification : ${consigne}]\n${document}`);
+        archive.fichier = await archiver('redaction', `${archive.modele} – ${archive.notes.slice(0, 60)}`, archive, archive.fichier) || archive.fichier;
+      }
+    }
   }
 
   function memoriserVersion() {

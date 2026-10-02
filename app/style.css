@@ -111,3 +111,37 @@ footer { padding: 10px 16px; font-size: 12px; color: var(--alerte); }
 .avertissement { color: var(--alerte); margin: 0; }
 .barre-enregistrer { position: sticky; bottom: 0; background: var(--carte); padding: 8px 0; }
 .formulaire label.case input { flex: none; width: auto; }
+
+/* Synthèse patient, anonymisation, historique */
+nav { flex-wrap: wrap; }
+.trois-colonnes { display: grid; grid-template-columns: 240px 1fr 1fr; gap: 16px; }
+.historique { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+@media (max-width: 1100px) { .trois-colonnes, .historique { grid-template-columns: 1fr; } }
+.liste-defilante { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 60vh; }
+.liste-defilante.courte { max-height: 25vh; }
+.element-liste { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 2px; }
+.element-liste.actif { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.carte-element { border: 1px solid var(--bord); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; }
+.carte-element.inactif { opacity: .5; }
+.carte-element .ligne > strong { flex: 1; font-size: 14px; }
+.carte-element img { max-width: 100%; max-height: 180px; object-fit: contain; align-self: flex-start; }
+.carte-element .apercu { font-size: 13px; color: var(--discret); white-space: pre-wrap; max-height: 80px; overflow: hidden; }
+.zone-depot { border: 1px dashed var(--bord); border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.zone-depot.survol { outline: 2px dashed var(--accent); }
+.zone-depot textarea { min-height: 80px; flex: none; }
+#sy-dossier { display: flex; flex-direction: column; gap: 8px; }
+.sortie-texte { flex: 1; min-height: 200px; max-height: 55vh; overflow-y: auto; white-space: pre-wrap; border: 1px solid var(--bord);
+  border-radius: 6px; padding: 10px; margin: 0; font: inherit; background: var(--carte); }
+#sy-reflexion { border: 1px dashed var(--bord); border-radius: 6px; padding: 4px 8px; font-size: 13px; }
+#sy-reflexion-texte { white-space: pre-wrap; max-height: 120px; overflow-y: auto; margin: 4px 0 0; color: var(--discret); font: 13px/1.4 inherit; }
+.grille-champs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.grille-champs label, #vue-anonymisation label { font-weight: normal; display: flex; flex-direction: column; gap: 2px; }
+#vue-anonymisation label.case { flex-direction: row; align-items: center; gap: 4px; }
+#vue-anonymisation label.case input, .carte-element input[type=checkbox] { flex: none; }
+.options { flex-wrap: wrap; gap: 12px; }
+.table-correspondances { border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+.table-correspondances td { border: 1px solid var(--bord); padding: 2px 8px; }
+nav button.flash { background: var(--flash); }
+#vue-anonymisation textarea#an-entree, #vue-anonymisation textarea#an-sortie { min-height: 220px; }
+/* Dans une colonne verticale, les champs d'une ligne ne doivent pas s'étirer en hauteur. */
+.colonne > input, .colonne > select { flex: none; }

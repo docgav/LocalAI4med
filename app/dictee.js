@@ -248,6 +248,7 @@
       clearInterval(minuteur);
       const resultat = await deposerTexte(fin.texte);
       apprendreFacteur(fin.duree_audio, fin.duree);
+      archiver('transcription', fin.texte.slice(0, 80), { texte: fin.texte, audio: fin.fichier, duree_audio: fin.duree_audio });
       etat(`Dictée ${resultat} – ${formaterDuree(fin.duree_audio)} d'audio transcrites en ${formaterDuree(fin.duree)} – audio : dictees\\${fin.fichier}`);
     } catch (e) {
       clearInterval(minuteur);

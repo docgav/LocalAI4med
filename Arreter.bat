@@ -4,6 +4,7 @@ call config.bat
 for %%F in ("%LLAMAFILE%") do set "PROC=%%~nxF"
 call scripts\arreter-llm.bat
 call scripts\arreter-dictee.bat
+call scripts\arreter-capteur.bat
 call scripts\nettoyer.bat
 echo IA arretee, dictees effacees.
 timeout /t 3 >nul

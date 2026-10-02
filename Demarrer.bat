@@ -71,6 +71,9 @@ if %ESSAI_P% lss 8 goto attente_passerelle
 :passerelle_ok
 if "%MODE%"=="complet" (set "URL=http://127.0.0.1:%PORT_DICTEE%/") else (set "URL=http://127.0.0.1:%PORT%/")
 if "%MODE%"=="secours" echo [ATTENTION] Passerelle indisponible : mode secours. Detail dans journal\passerelle.log
+rem Capteur (raccourcis clavier globaux vers la Synthese patient), mode complet seulement.
+call scripts\arreter-capteur.bat
+if "%MODE%"=="complet" if "%CAPTEUR%"=="1" start "IA - capteur" /min powershell -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File scripts\capteur.ps1
 echo Demarrage du modele de redaction...
 del /q journal\serveur.log 2>nul
 start "IA - serveur" /min cmd /c scripts\serveur.bat

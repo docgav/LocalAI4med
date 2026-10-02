@@ -240,6 +240,61 @@ function Repondre-Json($flux, [string]$json, [string]$origine) {
     $flux.Flush()
 }
 
+# --- Donnees conservees (dossier donnees\ sur le disque chiffre, jamais sur le poste) ---
+# archives\AAAA-MM-JJ\*.json : documents produits ; patients\<id>.json : dossiers de synthese ;
+# anonymisation\<id>.json : tables de correspondance. Chemins construits uniquement a partir de noms valides.
+$dossierDonnees = Join-Path $racine 'donnees'
+$dossierArchives = Join-Path $dossierDonnees 'archives'
+$dossierPatients = Join-Path $dossierDonnees 'patients'
+$dossierAnonymisation = Join-Path $dossierDonnees 'anonymisation'
+$boite = New-Object System.Collections.ArrayList   # elements envoyes par le capteur (raccourcis clavier)
+
+function Verifier-Motif([string]$valeur, [string]$motif, [string]$quoi) {
+    if ($valeur -notmatch $motif) { throw "$quoi refuse : $valeur" }
+}
+
+function Ecrire-JsonValide([string]$fichier, [byte[]]$corps, [int]$limiteMo) {
+    if ($corps.Length -gt $limiteMo * 1MB) { throw "contenu trop volumineux (plus de $limiteMo Mo)" }
+    $null = [Text.Encoding]::UTF8.GetString($corps) | ConvertFrom-Json   # refuse un JSON invalide
+    New-Item -ItemType Directory -Force (Split-Path $fichier -Parent) | Out-Null
+    [IO.File]::WriteAllBytes($fichier, $corps)
+}
+
+function Lire-Fichier([string]$fichier) {
+    if (-not (Test-Path $fichier)) { throw 'introuvable' }
+    return [IO.File]::ReadAllText($fichier, [Text.Encoding]::UTF8)
+}
+
+# Liste des archives (plus recentes d'abord), filtree par type et par texte recherche.
+function Lister-Archives([string]$type, [string]$texte) {
+    $liste = @()
+    if (-not (Test-Path $dossierArchives)) { return ,$liste }
+    $fichiers = Get-ChildItem -Path $dossierArchives -Filter '*.json' -File -Recurse | Sort-Object FullName -Descending
+    foreach ($f in $fichiers) {
+        if ($liste.Count -ge 300) { break }
+        $contenu = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8)
+        if ($texte -and $contenu.IndexOf($texte, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
+        try { $a = $contenu | ConvertFrom-Json } catch { continue }
+        if ($type -and $a.type -ne $type) { continue }
+        $liste += @{ fichier = "$($f.Directory.Name)/$($f.Name)"; type = $a.type; titre = $a.titre; date = $a.date }
+    }
+    return ,$liste
+}
+
+function Lister-Json([string]$dossierJson, [string[]]$champs) {
+    $liste = @()
+    if (-not (Test-Path $dossierJson)) { return ,$liste }
+    foreach ($f in (Get-ChildItem -Path $dossierJson -Filter '*.json' -File | Sort-Object LastWriteTime -Descending)) {
+        $o = @{ id = $f.BaseName; modifie = $f.LastWriteTime.ToString('yyyy-MM-dd HH:mm') }
+        try {
+            $d = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8) | ConvertFrom-Json
+            foreach ($c in $champs) { $o[$c] = $d.$c }
+        } catch {}
+        $liste += $o
+    }
+    return ,$liste
+}
+
 # Reponse en flux (une ligne JSON par evenement) pour afficher l'avancement dans la page.
 function Ouvrir-Flux($flux, [string]$origine) {
     $entete = "HTTP/1.1 200 OK`r`n" +
@@ -426,6 +481,67 @@ while ($true) {
             Remove-Item (Join-Path $dossierPromptsPerso $nomDoc) -ErrorAction SilentlyContinue
             Noter "modele de document personnel supprime : $nomDoc"
             Repondre $flux 200 @{ ok = $true } $origine
+        } elseif ($route -eq '/archiver' -and $req.Methode -eq 'POST') {
+            # ?fichier= : mise a jour d'une archive existante (ex. discussion qui continue)
+            $nomArchive = Parametre $chemin 'fichier'
+            if ($nomArchive) { Verifier-Motif $nomArchive '^\d{4}-\d{2}-\d{2}/[\w-]+\.json$' 'archive' }
+            else {
+                $type = (Parametre $chemin 'type') -replace '[^a-z]', ''
+                if (-not $type) { $type = 'document' }
+                $nomArchive = (Get-Date -Format 'yyyy-MM-dd') + '/' + (Get-Date -Format 'HHmmss-fff') + "-$type.json"
+            }
+            Ecrire-JsonValide (Join-Path $dossierArchives $nomArchive) $req.Corps 20
+            Repondre $flux 200 @{ ok = $true; fichier = $nomArchive } $origine
+        } elseif ($route -eq '/archives' -and $req.Methode -eq 'GET') {
+            Repondre $flux 200 @{ archives = (Lister-Archives (Parametre $chemin 'type') (Parametre $chemin 'texte')) } $origine
+        } elseif ($route -eq '/archive' -and $req.Methode -eq 'GET') {
+            $nomArchive = Parametre $chemin 'fichier'
+            Verifier-Motif $nomArchive '^\d{4}-\d{2}-\d{2}/[\w-]+\.json$' 'archive'
+            Repondre-Json $flux (Lire-Fichier (Join-Path $dossierArchives $nomArchive)) $origine
+        } elseif ($route -eq '/archive-supprimer' -and $req.Methode -eq 'POST') {
+            $nomArchive = Parametre $chemin 'fichier'
+            Verifier-Motif $nomArchive '^\d{4}-\d{2}-\d{2}/[\w-]+\.json$' 'archive'
+            Remove-Item (Join-Path $dossierArchives $nomArchive) -ErrorAction SilentlyContinue
+            Repondre $flux 200 @{ ok = $true } $origine
+        } elseif ($route -eq '/patients' -and $req.Methode -eq 'GET') {
+            Repondre $flux 200 @{ patients = (Lister-Json $dossierPatients @('libelle', 'cree')) } $origine
+        } elseif ($route -eq '/patient') {
+            $idPatient = Parametre $chemin 'id'
+            Verifier-Motif $idPatient '^[A-Za-z0-9_-]{1,64}$' 'dossier'
+            $fichierPatient = Join-Path $dossierPatients "$idPatient.json"
+            if ($req.Methode -eq 'GET') { Repondre-Json $flux (Lire-Fichier $fichierPatient) $origine }
+            else {
+                Ecrire-JsonValide $fichierPatient $req.Corps 100
+                Repondre $flux 200 @{ ok = $true } $origine
+            }
+        } elseif ($route -eq '/patient-supprimer' -and $req.Methode -eq 'POST') {
+            $idPatient = Parametre $chemin 'id'
+            Verifier-Motif $idPatient '^[A-Za-z0-9_-]{1,64}$' 'dossier'
+            Remove-Item (Join-Path $dossierPatients "$idPatient.json") -ErrorAction SilentlyContinue
+            Noter "dossier patient supprime : $idPatient"
+            Repondre $flux 200 @{ ok = $true } $origine
+        } elseif ($route -eq '/correspondances' -and $req.Methode -eq 'GET') {
+            Repondre $flux 200 @{ correspondances = (Lister-Json $dossierAnonymisation @('libelle', 'date')) } $origine
+        } elseif ($route -eq '/correspondance') {
+            $idAnon = Parametre $chemin 'id'
+            Verifier-Motif $idAnon '^ANON-\d{8}-\d{6}$' 'identifiant'
+            $fichierAnon = Join-Path $dossierAnonymisation "$idAnon.json"
+            if ($req.Methode -eq 'GET') { Repondre-Json $flux (Lire-Fichier $fichierAnon) $origine }
+            else {
+                Ecrire-JsonValide $fichierAnon $req.Corps 5
+                Repondre $flux 200 @{ ok = $true } $origine
+            }
+        } elseif ($route -eq '/boite' -and $req.Methode -eq 'POST') {
+            # Envoi du capteur (texte selectionne ou capture d'ecran), conserve jusqu'a lecture par la page.
+            $element = [Text.Encoding]::UTF8.GetString($req.Corps) | ConvertFrom-Json
+            if ($boite.Count -ge 50) { $boite.RemoveAt(0) }
+            [void]$boite.Add(@{ type = [string]$element.type; contenu = [string]$element.contenu; source = [string]$element.source; date = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') })
+            Noter "boite : element $($element.type) recu"
+            Repondre $flux 200 @{ ok = $true } $origine
+        } elseif ($route -eq '/boite' -and $req.Methode -eq 'GET') {
+            $elements = @($boite.ToArray())
+            $boite.Clear()
+            Repondre $flux 200 @{ elements = $elements } $origine
         } elseif ($req.Methode -eq 'POST' -and $route -eq '/transcrire') {
             if ($chemin -match 'fichier=(dictee-[0-9-]+\.wav)') {
                 # Nouvel essai sur un enregistrement deja sauvegarde

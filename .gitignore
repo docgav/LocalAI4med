@@ -12,3 +12,6 @@ app/dictee/*
 journal/
 app/prompts/_liste.txt
 !.gitkeep
+
+# Donnees conservees (dossiers patients, archives, correspondances) : jamais versionnees
+donnees/
