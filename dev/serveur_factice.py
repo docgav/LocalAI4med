@@ -68,10 +68,18 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.end_headers()
-        for mot in reponse.split(" "):
-            self._sse({"choices": [{"delta": {"content": mot + " "}}]})
+        n_prompt = sum(len(str(m["content"])) for m in messages) // 4
+        timings = {"prompt_n": n_prompt, "prompt_ms": 850.0, "predicted_n": 0, "predicted_ms": 0.0, "predicted_per_second": 0.0}
+        time.sleep(0.3)
+        # Reflexion simulee, puis reponse ; timings dans chaque paquet (timings_per_token)
+        for mot in "Je relis les notes et choisis la structure du courrier.".split(" "):
+            self._sse({"choices": [{"delta": {"reasoning_content": mot + " "}}]})
+            time.sleep(0.02)
+        for i, mot in enumerate(reponse.split(" "), 1):
+            timings.update(predicted_n=i, predicted_ms=i * 80.0, predicted_per_second=12.5)
+            self._sse({"choices": [{"delta": {"content": mot + " "}}], "timings": dict(timings)})
             time.sleep(0.01)
-        self._sse({"choices": [{"delta": {}, "finish_reason": "stop"}], "timings": {"predicted_per_second": 12.3}})
+        self._sse({"choices": [{"delta": {}, "finish_reason": "stop"}], "timings": dict(timings)})
         self.wfile.write(b"data: [DONE]\n\n")
 
     def _sse(self, obj):

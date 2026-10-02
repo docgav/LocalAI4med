@@ -7,6 +7,7 @@
     type: $('type'), notes: $('notes'), sortie: $('sortie'), consigne: $('consigne'),
     rediger: $('rediger'), stop: $('stop'), reinserer: $('reinserer'), effacer: $('effacer'),
     affiner: $('affiner'), copier: $('copier'), annuler: $('annuler'), infoGeneration: $('info-generation'),
+    reflexion: $('reflexion'), reflexionTexte: $('reflexion-texte'), stats: $('stats-generation'),
   };
 
   let consignesCommunes = '';  // _commun.txt
@@ -16,67 +17,90 @@
   let controleur = null;       // AbortController de la génération en cours
 
   async function chargerModeles() {
-    try {
-      consignesCommunes = analyserModele(await lireTexte('prompts/_commun.txt'), '_commun.txt').consignes;
-    } catch { consignesCommunes = ''; }
-    let fichiers = [];
-    try {
-      fichiers = (await lireTexte('prompts/_liste.txt')).split('\n').map((f) => f.trim()).filter(Boolean);
-    } catch {
-      alert('Liste des modèles introuvable : lancez l\'IA avec Demarrer.bat.');
-    }
-    for (const f of fichiers) {
-      try { modeles.push(analyserModele(await lireTexte('prompts/' + encodeURIComponent(f)), f)); }
-      catch (e) { console.warn(e); }
+    let docs = [];
+    try { docs = await chargerDocuments(); }
+    catch { alert('Modèles de documents introuvables : lancez l\'IA avec Demarrer.bat.'); }
+    const commun = docs.find((d) => d.fichier === '_commun.txt');
+    consignesCommunes = commun ? analyserModele(commun.contenu.replace(/\r\n/g, '\n'), '_commun.txt').consignes : '';
+    const choixAvant = modeles[+el.type.value] ? modeles[+el.type.value].fichier : null;
+    modeles.length = 0;
+    for (const d of docs) {
+      if (!d.fichier.startsWith('_')) modeles.push(analyserModele(d.contenu.replace(/\r\n/g, '\n'), d.fichier));
     }
     el.type.innerHTML = '';
     modeles.forEach((m, i) => el.type.add(new Option(m.titre, String(i))));
-    let memorise = null;
-    try { memorise = localStorage.getItem('type'); } catch {}
+    let memorise = choixAvant;
+    if (!memorise) { try { memorise = localStorage.getItem('type'); } catch {} }
     const idx = modeles.findIndex((m) => m.fichier === memorise);
     if (idx >= 0) el.type.value = String(idx);
   }
+  // Rechargés après modification dans l'onglet Personnaliser.
+  document.addEventListener('documents-modifies', chargerModeles);
 
   el.type.addEventListener('change', () => {
     try { localStorage.setItem('type', modeles[+el.type.value].fichier); } catch {}
   });
 
   // Consignes en système, exemples en tours de dialogue (few-shot), puis les notes.
+  // Consignes (+ glossaire) en système, exemples en tours de dialogue (few-shot), puis les notes.
+  // La signature des réglages remplace [NOM], [HÔPITAL] et le service, y compris dans les exemples.
   function construireMessages(modele, notes) {
-    const systeme = [consignesCommunes, modele.consignes].filter(Boolean).join('\n\n');
+    const systeme = appliquerSignature([consignesCommunes, modele.consignes, consignesPersonnelles()].filter(Boolean).join('\n\n'));
     const messages = [{ role: 'system', content: systeme }];
     for (const ex of modele.exemples) {
       messages.push({ role: 'user', content: ex.notes });
-      messages.push({ role: 'assistant', content: ex.document });
+      messages.push({ role: 'assistant', content: appliquerSignature(ex.document) });
     }
-    messages.push({ role: 'user', content: notes });
+    messages.push({ role: 'user', content: developperRaccourcis(notes) });
     return messages;
   }
 
+  // Affichage pendant la génération : phase (lecture des notes, réflexion, rédaction), réflexion du
+  // modèle s'il y en a, et statistiques en direct, comme dans l'interface de discussion.
   async function generer(messages) {
     controleur = new AbortController();
     occupe(true);
     el.sortie.value = '';
-    el.infoGeneration.textContent = 'Lecture des notes…';
-    let texte = '';
+    el.reflexionTexte.textContent = '';
+    el.reflexion.hidden = true;
+    el.stats.textContent = '';
+    const montrerReflexion = (reglages.redaction || {}).afficher_reflexion !== false;
+    const t0 = performance.now();
+    let phase = 'Lecture des notes', texte = '', dernieresStats = null;
+    const afficherPhase = () => {
+      el.infoGeneration.textContent = `${phase}… ${Math.round((performance.now() - t0) / 1000)} s`;
+    };
+    afficherPhase();
+    const minuteur = setInterval(afficherPhase, 500);
     try {
       const resultat = await appelerModele(messages, {
         signal: controleur.signal,
-        surEtat: (m) => { el.infoGeneration.textContent = m; },
+        surReflexion: (r) => {
+          phase = 'Réflexion';
+          if (!montrerReflexion) return;
+          el.reflexion.hidden = false;
+          el.reflexionTexte.textContent = r;
+          el.reflexionTexte.scrollTop = el.reflexionTexte.scrollHeight;
+        },
+        surStats: (t) => { dernieresStats = t; el.stats.textContent = bilanGeneration(t); },
         surTexte: (t) => {
+          phase = 'Rédaction';
           texte = t;
           el.sortie.value = t;
           el.sortie.scrollTop = el.sortie.scrollHeight;
-          el.infoGeneration.textContent = 'Rédaction…';
         },
       });
-      el.infoGeneration.textContent = resultat.bilan;
+      el.infoGeneration.textContent = '';
+      el.stats.textContent = resultat.bilan;
+      if (resultat.reflexion && montrerReflexion) el.reflexion.open = false;
       return resultat.texte;
     } catch (e) {
       if (e.name === 'AbortError') { el.infoGeneration.textContent = 'Arrêté.'; return texte.trim(); }
       el.infoGeneration.textContent = 'Erreur : ' + e.message;
       return null;
     } finally {
+      clearInterval(minuteur);
+      if (dernieresStats && !el.stats.textContent) el.stats.textContent = bilanGeneration(dernieresStats);
       controleur = null;
       occupe(false);
     }
@@ -135,7 +159,8 @@
     el.notes.value = ''; el.sortie.value = ''; el.consigne.value = '';
     conversation = null; versionPrecedente = null; el.annuler.disabled = true;
     el.infoGeneration.textContent = '';
+    el.stats.textContent = ''; el.reflexionTexte.textContent = ''; el.reflexion.hidden = true;
   });
 
-  chargerModeles();
+  reglagesPrets.then(chargerModeles);
 }

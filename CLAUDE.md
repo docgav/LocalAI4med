@@ -72,6 +72,19 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   `LLM_ACTIF`/`MMPROJ_ACTIF` ; mmproj déduit de `MODELE_2B/4B` ou `mmproj-<nom>`). Noms validés
   contre la liste. Routes de la passerelle comparées exactement (sinon `/modeles` attrape
   `/modeles.js`). `scripts/arreter-llm.bat` : arrêt par nom puis par port (netstat).
+- Personnalisation (onglet Personnaliser, `app/personnaliser.js`) : `GET/POST /reglages`
+  (`ressources/reglages.json`, sinon `app/reglages-defaut.json` ; JSON validé avant écriture),
+  `GET /documents` (fusion `app/prompts` + `ressources/prompts`, origine defaut/modifie/perso),
+  `POST /documents?fichier=` et `/documents-supprimer` (noms `^[A-Za-z0-9_][A-Za-z0-9_-]*\.txt$`).
+  La passerelle applique `transcription` (rapide → -bs 1/5, fenetre_adaptee, threads, vocabulaire +
+  termes du dictionnaire, sans accents car la ligne de commande n'est pas sûre en UTF-8).
+  La page applique : `corrigerTranscription` + `developperRaccourcis` à la dictée (`deposerTexte`),
+  raccourcis aux notes envoyées, glossaire ajouté au système, `appliquerSignature` sur le système et
+  les exemples, température/longueur. Mode secours : réglages en localStorage, modèles non modifiables.
+- Rédaction : `timings_per_token: true` ; `reasoning_content` affiché dans un cadre repliable ;
+  statistiques `prompt_n/prompt_ms/predicted_n/predicted_per_second` (`bilanGeneration`).
+- L'interface web de llama.cpp n'a pas de traduction : réglage `discussion.interface`
+  (`llamafile` par défaut, ou `integree` en français) ; `discussionLlamafile()` dans `commun.js`.
 - Si llamafile s'arrête aussitôt en mode complet, `Demarrer.bat` le relance une fois sans
   `--ui-config-file` (`SANS_PRECONFIG=1`, premier journal gardé dans `journal/serveur-essai1.log`).
   `serveur.log` commence par la commande exacte et finit par « [llamafile arrete, code N] ».

@@ -26,17 +26,20 @@
     .then((t) => { const c = JSON.parse(t).systemMessage; if (c) consignes = c; })
     .catch(() => {});
 
-  // Mode complet : interface de llamafile, chargée à la première ouverture de l'onglet.
-  configPrete.then(() => {
-    if (config.mode !== 'complet') return;
-    const url = `http://127.0.0.1:${config.llm}/`;
-    $('discussion-perso').hidden = true;
-    $('discussion-llama').hidden = false;
-    $('ui-llama-lien').href = url;
-    const charger = () => { if (!$('ui-llama').src) $('ui-llama').src = url; };
-    if (vueActive === 'discussion') charger();
-    document.querySelector('[data-vue=discussion]').addEventListener('click', charger);
-  });
+  // Interface de llamafile (mode complet, réglage par défaut) chargée à la première ouverture de
+  // l'onglet ; sinon discussion intégrée (français). Réappliqué quand les réglages changent.
+  const ongletDiscussion = document.querySelector('[data-vue=discussion]');
+  function chargerCadre() { if (discussionLlamafile() && !$('ui-llama').src) $('ui-llama').src = `http://127.0.0.1:${config.llm}/`; }
+  function appliquerInterface() {
+    const llama = discussionLlamafile();
+    $('discussion-perso').hidden = llama;
+    $('discussion-llama').hidden = !llama;
+    $('ui-llama-lien').href = `http://127.0.0.1:${config.llm}/`;
+    if (llama && vueActive === 'discussion') chargerCadre();
+  }
+  ongletDiscussion.addEventListener('click', chargerCadre);
+  document.addEventListener('reglages-modifies', appliquerInterface);
+  reglagesPrets.then(appliquerInterface);
 
   // --- Rendu Markdown minimal et sûr (le texte est échappé avant mise en forme) ---
   function echapper(t) {

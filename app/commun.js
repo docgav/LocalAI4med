@@ -53,15 +53,23 @@ function analyserModele(texte, fichier) {
 
 // --- Appel au modèle en streaming (API compatible OpenAI de llamafile) ---
 // surTexte(texteComplet) est appelé à chaque morceau reçu ; surEtat(message) pour l'affichage.
-async function appelerModele(messages, { signal, surTexte, surEtat, max_tokens = 2048 } = {}) {
+// surTexte(texte), surReflexion(raisonnement) et surStats(timings) sont appelés au fil de la réponse.
+// timings (llama-server) : prompt_n / prompt_ms (lecture), predicted_n / predicted_per_second (rédaction).
+async function appelerModele(messages, { signal, surTexte, surReflexion, surStats, surEtat, max_tokens, temperature } = {}) {
   await configPrete;
+  await reglagesPrets;
+  const r = reglages.redaction || {};
   const debut = performance.now();
-  let texte = '', timings = null;
+  let texte = '', reflexion = '', timings = null;
   const rep = await fetch(config.api + 'v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal,
-    body: JSON.stringify({ messages, stream: true, temperature: 0.3, top_p: 0.9, max_tokens, cache_prompt: true }),
+    body: JSON.stringify({
+      messages, stream: true, top_p: 0.9, cache_prompt: true, timings_per_token: true,
+      temperature: temperature ?? r.temperature ?? 0.3,
+      max_tokens: max_tokens ?? r.longueur_max ?? 2048,
+    }),
   });
   if (!rep.ok) {
     let detail = await rep.text();
@@ -84,27 +92,127 @@ async function appelerModele(messages, { signal, surTexte, surEtat, max_tokens =
       let paquet;
       try { paquet = JSON.parse(donnees); } catch { continue; }
       if (paquet.error) throw new Error(paquet.error.message || 'erreur du serveur');
-      if (paquet.timings) timings = paquet.timings;
+      if (paquet.timings) { timings = paquet.timings; if (surStats) surStats(timings); }
       const delta = paquet.choices && paquet.choices[0] && paquet.choices[0].delta;
       if (!delta) continue;
-      if (delta.reasoning_content && !texte && surEtat) surEtat('Réflexion…');
+      if (delta.reasoning_content) {
+        reflexion += delta.reasoning_content;
+        if (surReflexion) surReflexion(reflexion);
+        else if (!texte && surEtat) surEtat('Réflexion…');
+      }
       if (delta.content) {
         texte += delta.content;
         if (surTexte) surTexte(texte);
       }
     }
   }
-  const duree = ((performance.now() - debut) / 1000).toFixed(0);
-  const vitesse = timings && timings.predicted_per_second ? ` – ${timings.predicted_per_second.toFixed(1)} tokens/s` : '';
-  return { texte: texte.trim(), bilan: `Terminé en ${duree} s${vitesse}` };
+  const duree = (performance.now() - debut) / 1000;
+  return { texte: texte.trim(), reflexion, timings, duree, bilan: bilanGeneration(timings, duree) };
+}
+
+// Résumé lisible des statistiques de génération.
+function bilanGeneration(t, duree) {
+  const nb = (x) => Math.round(x).toLocaleString('fr-FR');
+  const s = (ms) => (ms / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+  const morceaux = [];
+  if (duree !== undefined) morceaux.push(`Terminé en ${Math.round(duree)} s`);
+  if (t && t.prompt_n !== undefined) morceaux.push(`lecture : ${nb(t.prompt_n)} tokens en ${s(t.prompt_ms)} s`);
+  if (t && t.predicted_n) morceaux.push(`rédaction : ${nb(t.predicted_n)} tokens à ${t.predicted_per_second.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} tokens/s`);
+  return morceaux.join(' – ');
+}
+
+// --- Réglages et personnalisation ---
+// Mode complet : ressources/reglages.json via la passerelle (survit aux mises à jour).
+// Mode secours : réglages par défaut, modifications gardées dans le navigateur seulement.
+let reglages = {};
+async function chargerReglages() {
+  await configPrete;
+  try {
+    const url = config.mode === 'complet' ? `http://127.0.0.1:${config.dictee}/reglages` : 'reglages-defaut.json';
+    reglages = JSON.parse(await lireTexte(url));
+  } catch { reglages = {}; }
+  if (config.mode !== 'complet') {
+    try { const l = localStorage.getItem('reglages'); if (l) reglages = JSON.parse(l); } catch {}
+  }
+  return reglages;
+}
+const reglagesPrets = chargerReglages();
+
+async function enregistrerReglages(nouveaux) {
+  reglages = nouveaux;
+  if (config.mode !== 'complet') { try { localStorage.setItem('reglages', JSON.stringify(nouveaux)); } catch {} return; }
+  const rep = await fetch(`http://127.0.0.1:${config.dictee}/reglages`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nouveaux, null, 2),
+  });
+  const r = await rep.json();
+  if (!rep.ok) throw new Error(r.erreur || 'erreur ' + rep.status);
+  document.dispatchEvent(new Event('reglages-modifies'));
+}
+
+// Expression qui trouve un mot ou une expression entière (lettres accentuées comprises).
+function motEntier(expr) {
+  const echappe = expr.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+  return new RegExp(`(?<![\\p{L}\\p{N}])${echappe}(?![\\p{L}\\p{N}])`, 'giu');
+}
+
+// Corrections des erreurs de transcription fréquentes (dictionnaire de transcription).
+function corrigerTranscription(texte) {
+  for (const d of reglages.dictionnaire_transcription || []) {
+    if (d.entendu && d.entendu.trim() && d.ecrit !== undefined) texte = texte.replace(motEntier(d.entendu), d.ecrit);
+  }
+  return texte;
+}
+
+// Raccourcis : une expression est remplacée par son texte complet (sauf s'il est déjà présent).
+function developperRaccourcis(texte) {
+  for (const r of reglages.raccourcis || []) {
+    if (!r.declencheur || !r.declencheur.trim() || !r.texte || texte.includes(r.texte)) continue;
+    texte = texte.replace(motEntier(r.declencheur), r.texte);
+  }
+  return texte;
+}
+
+// Glossaire et signature ajoutés aux consignes du modèle.
+function consignesPersonnelles() {
+  const g = (reglages.glossaire || []).filter((x) => x.terme && x.definition);
+  return g.length ? 'Abréviations et termes du service (à utiliser pour comprendre les notes) :\n' +
+    g.map((x) => `- ${x.terme} = ${x.definition}`).join('\n') : '';
+}
+function appliquerSignature(texte) {
+  const s = reglages.signature || {};
+  if (s.nom) texte = texte.split('[NOM]').join(s.nom);
+  if (s.hopital) texte = texte.split('[HÔPITAL]').join(s.hopital);
+  if (s.service) texte = texte.split('Service de neurologie').join(s.service);
+  return texte;
+}
+
+// Modèles de documents : passerelle (défaut + personnels) en mode complet, fichiers statiques sinon.
+async function chargerDocuments() {
+  await configPrete;
+  if (config.mode === 'complet') {
+    const r = JSON.parse(await lireTexte(`http://127.0.0.1:${config.dictee}/documents`));
+    return r.documents;
+  }
+  const docs = [];
+  const fichiers = (await lireTexte('prompts/_liste.txt')).split('\n').map((f) => f.trim()).filter(Boolean);
+  for (const f of ['_commun.txt', ...fichiers]) {
+    try { docs.push({ fichier: f, origine: 'defaut', contenu: await lireTexte('prompts/' + encodeURIComponent(f)) }); } catch {}
+  }
+  return docs;
 }
 
 // --- Onglets ---
+// Interface de discussion de llamafile (anglais, complète) ou intégrée (français), selon les réglages.
+function discussionLlamafile() {
+  return config.mode === 'complet' && ((reglages.discussion || {}).interface || 'llamafile') === 'llamafile';
+}
+
 // Zone qui reçoit la dictée dans chaque onglet. L'interface de discussion de llamafile (mode complet)
 // est sur une autre origine : la dictée y est copiée dans le presse-papier.
 const vues = {
   redaction: { cibleDictee: () => $('notes') },
-  discussion: { cibleDictee: () => (config.mode === 'complet' ? null : $('saisie')) },
+  personnaliser: { cibleDictee: () => null },
+  discussion: { cibleDictee: () => (discussionLlamafile() ? null : $('saisie')) },
 };
 let vueActive = 'redaction';
 
@@ -136,6 +244,8 @@ function insererTexte(zone, texte) {
 // Insère le texte dicté dans l'onglet affiché, ou le copie dans le presse-papier s'il n'y a pas de
 // zone accessible. Renvoie un court compte rendu pour l'affichage.
 async function deposerTexte(texte) {
+  await reglagesPrets;
+  texte = developperRaccourcis(corrigerTranscription(texte));
   const cible = vues[vueActive].cibleDictee();
   if (cible) { insererTexte(cible, texte); return 'insérée'; }
   const bouton = $('copier-dictee');

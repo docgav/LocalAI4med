@@ -26,6 +26,24 @@ Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
 6. En fin de session : **Tout effacer** dans la page, puis `Q` dans la fenêtre noire
    (arrêt du serveur, effacement des dictées, vidage du presse-papier).
 
+### Onglet Personnaliser
+
+Tout se règle dans l'application ; en mode complet, c'est enregistré dans `ressources\` (fichier
+`reglages.json` et dossier `prompts\`), donc conservé lors des mises à jour.
+- **Réglages** : signature des courriers (remplace `[NOM]`, `[HÔPITAL]` et le service), créativité et
+  longueur de la rédaction, affichage de la réflexion du modèle, options de transcription, choix de
+  l'interface de discussion.
+- **Modèles de documents** : modifier un modèle existant (votre version remplace l'originale, qui
+  reste récupérable), en créer un nouveau, modifier les consignes communes (`_commun.txt`).
+- **Raccourcis** : une expression (ex. « examen neurologique normal ») est remplacée par un texte
+  complet, dans les notes dictées et au moment de la rédaction.
+- **Dictionnaire de transcription** : corrige ce que Whisper comprend mal (ex. « natalisumab » →
+  « natalizumab ») ; les formes correctes lui sont aussi données comme vocabulaire.
+- **Glossaire** : abréviations du service (ex. SEP = sclérose en plaques), transmises au modèle.
+
+Pendant la rédaction, la page affiche la phase en cours, la **réflexion du modèle** s'il en produit
+(cadre repliable) et les **statistiques** : tokens lus, tokens rédigés, vitesse en tokens/s.
+
 ### Changer de modèle sans redémarrer
 
 Le menu **⚙ Modèles** (en haut de la page) liste les fichiers présents dans `ressources\` :
@@ -41,7 +59,7 @@ Menu disponible en mode complet seulement.
 
 ### Onglet Discussion
 
-C'est **l'interface de discussion par défaut de llamafile** (celle de llama.cpp), affichée dans la page
+Par défaut, c'est **l'interface de discussion de llamafile** (celle de llama.cpp), affichée dans la page
 et déjà réglée : message système en français adapté à la neurologie, température basse, titres des
 discussions sans appel au modèle. Toutes ses fonctions sont disponibles : historique des discussions,
 pièces jointes (PDF, images, texte), modification et régénération des réponses, réglages (roue dentée).
@@ -55,6 +73,9 @@ pièces jointes (PDF, images, texte), modification et régénération des répon
 **Confidentialité** : cette interface garde l'historique des discussions dans le navigateur. La page est
 donc ouverte dans une **fenêtre InPrivate** d'Edge, dont tout le contenu est effacé à sa fermeture
 (réglage `NAVIGATEUR_PRIVE=1`). Conséquence : l'autorisation du micro est redemandée à chaque session.
+
+**Interface en anglais** : celle de llamafile n'existe qu'en anglais (le modèle répond en français).
+Pour une discussion entièrement en français : onglet Personnaliser → Discussion → « Interface intégrée ».
 
 **Mode secours** : si PowerShell est bloqué sur le poste, la page est servie par llamafile et l'onglet
 Discussion revient à une discussion simplifiée intégrée (mêmes pièces jointes, dictée insérée directement).

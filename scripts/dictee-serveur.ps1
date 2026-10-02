@@ -179,6 +179,67 @@ function Charger-LLM([string]$nom) {
     Noter "chargement du modele de redaction : $nom (images : $mmproj)"
 }
 
+# --- Reglages et personnalisation (ressources\, jamais touche par les mises a jour) ---
+$fichierReglages = Join-Path $dossierRessources 'reglages.json'
+$reglagesDefaut = Join-Path $dossierApp 'reglages-defaut.json'
+$dossierPrompts = Join-Path $dossierApp 'prompts'
+$dossierPromptsPerso = Join-Path $dossierRessources 'prompts'
+
+function Texte-Reglages {
+    foreach ($f in @($fichierReglages, $reglagesDefaut)) {
+        if (Test-Path $f) { return [IO.File]::ReadAllText($f, [Text.Encoding]::UTF8) }
+    }
+    return '{}'
+}
+
+function Lire-Reglages {
+    try { return (Texte-Reglages | ConvertFrom-Json) } catch { Noter "reglages illisibles : $($_.Exception.Message)"; return $null }
+}
+
+function Sans-Accents([string]$texte) {
+    $d = $texte.Normalize([Text.NormalizationForm]::FormD)
+    $sb = New-Object Text.StringBuilder
+    foreach ($c in $d.ToCharArray()) {
+        if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($c) -ne [Globalization.UnicodeCategory]::NonSpacingMark) { [void]$sb.Append($c) }
+    }
+    return $sb.ToString()
+}
+
+# Modeles de documents : ceux de app\prompts, remplaces ou completes par ressources\prompts.
+function Lister-Documents {
+    $docs = [ordered]@{}
+    foreach ($dossierDoc in @($dossierPrompts, $dossierPromptsPerso)) {
+        if (-not (Test-Path $dossierDoc)) { continue }
+        foreach ($f in (Get-ChildItem -Path $dossierDoc -Filter '*.txt' -File | Sort-Object Name)) {
+            if ($f.Name -eq '_liste.txt') { continue }
+            $origine = 'defaut'
+            if ($dossierDoc -eq $dossierPromptsPerso) { $origine = 'perso'; if ($docs.Contains($f.Name)) { $origine = 'modifie' } }
+            $docs[$f.Name] = @{ fichier = $f.Name; origine = $origine; contenu = [IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8) }
+        }
+    }
+    $liste = @()
+    foreach ($nomDoc in ($docs.Keys | Sort-Object)) { $liste += $docs[$nomDoc] }
+    return ,$liste
+}
+
+function Verifier-NomDocument([string]$nomDoc) {
+    if ($nomDoc -notmatch '^[A-Za-z0-9_][A-Za-z0-9_-]*\.txt$' -or $nomDoc -eq '_liste.txt') { throw "nom de fichier refuse : $nomDoc" }
+}
+
+function Repondre-Json($flux, [string]$json, [string]$origine) {
+    $corps = [Text.Encoding]::UTF8.GetBytes($json)
+    $entete = "HTTP/1.1 200 OK`r`n" +
+        "Content-Type: application/json; charset=utf-8`r`n" +
+        "Content-Length: $($corps.Length)`r`n" +
+        "Cache-Control: no-store`r`n" +
+        "Access-Control-Allow-Origin: $origine`r`n" +
+        "Connection: close`r`n`r`n"
+    $e = [Text.Encoding]::ASCII.GetBytes($entete)
+    $flux.Write($e, 0, $e.Length)
+    $flux.Write($corps, 0, $corps.Length)
+    $flux.Flush()
+}
+
 # Reponse en flux (une ligne JSON par evenement) pour afficher l'avancement dans la page.
 function Ouvrir-Flux($flux, [string]$origine) {
     $entete = "HTTP/1.1 200 OK`r`n" +
@@ -216,14 +277,37 @@ function Transcrire([string]$wav, $flux) {
     $erreurs = Join-Path $journal 'whisper.log'
     Remove-Item $txt, $sortie, $erreurs -ErrorAction SilentlyContinue
     $dureeAudio = ((Get-Item $wav).Length - 44) / 32000
+    # Reglages de la page (ressources\reglages.json) prioritaires sur config.bat.
     $options = $optionsWhisper
-    if ($env:WHISPER_CTX_ADAPTE -eq '1') {
+    $nbThreads = $threads
+    $ctxAdapte = ($env:WHISPER_CTX_ADAPTE -eq '1')
+    $prompt = $vocab
+    $r = Lire-Reglages
+    if ($r -and $r.transcription) {
+        $t = $r.transcription
+        if ($null -ne $t.rapide) {
+            $options = ($options -replace '-bs\s+\d+', '').Trim()
+            if ($t.rapide) { $options = "-bs 1 $options" } else { $options = "-bs 5 $options" }
+        }
+        if ($null -ne $t.fenetre_adaptee) { $ctxAdapte = [bool]$t.fenetre_adaptee }
+        if ([int]$t.threads -gt 0) { $nbThreads = [int]$t.threads }
+        if ($t.vocabulaire) { $prompt = [string]$t.vocabulaire }
+    }
+    if ($r -and $r.dictionnaire_transcription) {
+        # Les termes corrects du dictionnaire servent aussi de vocabulaire a Whisper.
+        $termes = @($r.dictionnaire_transcription | ForEach-Object { $_.ecrit } | Where-Object { $_ } | Select-Object -Unique)
+        if ($termes.Count -gt 0) { $prompt = "$prompt " + ($termes -join ', ') + '.' }
+    }
+    # Sans accents ni guillemets : la ligne de commande n'est pas toujours transmise en UTF-8.
+    $prompt = (Sans-Accents $prompt) -replace '"', ''
+    if ($prompt.Length -gt 600) { $prompt = $prompt.Substring(0, 600) }
+    if ($ctxAdapte) {
         # Fenetre audio reduite a la duree reelle (50 trames par seconde, 1500 = 30 s) : encodage
         # beaucoup plus court pour les dictees breves.
         $ac = [Math]::Min(1500, [Math]::Max(256, [int][Math]::Ceiling($dureeAudio * 50) + 64))
         $options = "$options -ac $ac"
     }
-    $arguments = "-m `"$modele`" -f `"$wav`" -l fr -t $threads $options -otxt -of `"$base`" -pp --prompt `"$vocab`""
+    $arguments = "-m `"$modele`" -f `"$wav`" -l fr -t $nbThreads $options -otxt -of `"$base`" -pp --prompt `"$prompt`""
     $chrono = [Diagnostics.Stopwatch]::StartNew()
     $p = Start-Process -FilePath $whisper -ArgumentList $arguments -NoNewWindow -PassThru `
         -RedirectStandardError $erreurs -RedirectStandardOutput $sortie
@@ -252,7 +336,7 @@ function Transcrire([string]$wav, $flux) {
         Remove-Item $sortie -ErrorAction SilentlyContinue
         # Journal des durees (aucun texte) pour diagnostiquer les lenteurs.
         $ligne = '{0:yyyy-MM-dd HH:mm:ss}  audio {1:0.0} s  100% a {2:0.0} s  texte a {3:0.0} s  total {4:0.0} s  ({5}, {6} threads, {7}, {8})' -f `
-            (Get-Date), $dureeAudio, $t100, $tTexte, $chrono.Elapsed.TotalSeconds, $fin, $threads, $options, (Split-Path $modele -Leaf)
+            (Get-Date), $dureeAudio, $t100, $tTexte, $chrono.Elapsed.TotalSeconds, $fin, $nbThreads, $options, (Split-Path $modele -Leaf)
         Add-Content -Path (Join-Path $journal 'dictee.log') -Value $ligne -Encoding Ascii
     }
     if (-not (Test-Path $txt)) { throw "transcription echouee (code $($p.ExitCode), voir journal\whisper.log)" }
@@ -317,6 +401,31 @@ while ($true) {
             Charger-LLM $choix
             $llmActif = $choix
             Repondre $flux 200 @{ ok = $true; llm_actif = $choix } $origine
+        } elseif ($req.Methode -eq 'GET' -and $route -eq '/reglages') {
+            Repondre-Json $flux (Texte-Reglages) $origine
+        } elseif ($req.Methode -eq 'POST' -and $route -eq '/reglages') {
+            if ($req.Corps.Length -gt 1MB) { throw 'reglages trop volumineux' }
+            $texteReglages = [Text.Encoding]::UTF8.GetString($req.Corps)
+            $null = $texteReglages | ConvertFrom-Json   # refuse un JSON invalide
+            [IO.File]::WriteAllBytes($fichierReglages, $req.Corps)
+            Noter "reglages enregistres"
+            Repondre $flux 200 @{ ok = $true } $origine
+        } elseif ($req.Methode -eq 'GET' -and $route -eq '/documents') {
+            Repondre $flux 200 @{ documents = (Lister-Documents) } $origine
+        } elseif ($req.Methode -eq 'POST' -and $route -eq '/documents') {
+            $nomDoc = Parametre $chemin 'fichier'
+            Verifier-NomDocument $nomDoc
+            if ($req.Corps.Length -gt 1MB) { throw 'modele trop volumineux' }
+            New-Item -ItemType Directory -Force $dossierPromptsPerso | Out-Null
+            [IO.File]::WriteAllBytes((Join-Path $dossierPromptsPerso $nomDoc), $req.Corps)
+            Noter "modele de document enregistre : $nomDoc"
+            Repondre $flux 200 @{ ok = $true } $origine
+        } elseif ($req.Methode -eq 'POST' -and $route -eq '/documents-supprimer') {
+            $nomDoc = Parametre $chemin 'fichier'
+            Verifier-NomDocument $nomDoc
+            Remove-Item (Join-Path $dossierPromptsPerso $nomDoc) -ErrorAction SilentlyContinue
+            Noter "modele de document personnel supprime : $nomDoc"
+            Repondre $flux 200 @{ ok = $true } $origine
         } elseif ($req.Methode -eq 'POST' -and $route -eq '/transcrire') {
             if ($chemin -match 'fichier=(dictee-[0-9-]+\.wav)') {
                 # Nouvel essai sur un enregistrement deja sauvegarde

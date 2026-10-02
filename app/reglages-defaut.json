@@ -1,0 +1,43 @@
+{
+  "signature": {
+    "nom": "",
+    "service": "Service de neurologie",
+    "hopital": ""
+  },
+  "redaction": {
+    "temperature": 0.3,
+    "longueur_max": 2048,
+    "afficher_reflexion": true
+  },
+  "transcription": {
+    "rapide": true,
+    "fenetre_adaptee": false,
+    "threads": 0,
+    "vocabulaire": "Consultation de neurologie."
+  },
+  "discussion": {
+    "interface": "llamafile"
+  },
+  "raccourcis": [
+    {
+      "declencheur": "examen neurologique normal",
+      "texte": "Examen neurologique normal : patient conscient et orienté, pas de syndrome méningé. Paires crâniennes normales, oculomotricité normale, pas de nystagmus. Pas de déficit moteur ni sensitif. Réflexes ostéotendineux présents et symétriques, réflexes cutanés plantaires en flexion. Pas de syndrome cérébelleux (épreuves doigt-nez et talon-genou normales). Marche normale, signe de Romberg négatif."
+    }
+  ],
+  "dictionnaire_transcription": [
+    { "entendu": "sclérose en plaque", "ecrit": "sclérose en plaques" },
+    { "entendu": "ocrélisumab", "ecrit": "ocrélizumab" },
+    { "entendu": "natalisumab", "ecrit": "natalizumab" },
+    { "entendu": "bande oligoclonale", "ecrit": "bandes oligoclonales" },
+    { "entendu": "E.D.S.S.", "ecrit": "EDSS" }
+  ],
+  "glossaire": [
+    { "terme": "SEP", "definition": "sclérose en plaques" },
+    { "terme": "RR", "definition": "rémittente-récurrente" },
+    { "terme": "EDSS", "definition": "Expanded Disability Status Scale (score de handicap)" },
+    { "terme": "BOC", "definition": "bandes oligoclonales" },
+    { "terme": "LEMP", "definition": "leucoencéphalopathie multifocale progressive" },
+    { "terme": "PL", "definition": "ponction lombaire" },
+    { "terme": "ROT", "definition": "réflexes ostéotendineux" }
+  ]
+}
