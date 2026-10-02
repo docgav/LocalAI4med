@@ -27,6 +27,11 @@ set "OPTIONS_LLM="
 rem --- Transcription (whisperfile) ---
 set "WHISPERFILE=ressources\whisperfile.exe"
 set "MODELE_WHISPER=ressources\ggml-medium-q5_0.bin"
+rem Vitesse : -bs 1 = decodage rapide (glouton). -bs 5 = recherche en faisceau (reglage d'origine),
+rem un peu plus precise mais nettement plus lente.
+set "WHISPER_OPTIONS=-bs 1"
+rem Threads CPU pour la transcription (vide = nombre de coeurs physiques du poste).
+set "WHISPER_THREADS="
 set "VOCABULAIRE=Consultation de neurologie. Sclerose en plaques, IRM, EDSS, ocrelizumab, natalizumab, bandes oligoclonales, poussee, myelite."
 
 rem --- Dictee integree a la page (passerelle PowerShell sur 127.0.0.1) ---

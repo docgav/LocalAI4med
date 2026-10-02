@@ -24,7 +24,8 @@ if not exist "%BASE%.wav" (
 )
 
 echo === Transcription en cours... ===
-"%WHISPERFILE%" -m "%MODELE_WHISPER%" -f "%BASE%.wav" -l fr -otxt -of "%BASE%" -np --prompt "%VOCABULAIRE%"
+if defined WHISPER_THREADS set "WHISPER_OPTIONS=%WHISPER_OPTIONS% -t %WHISPER_THREADS%"
+"%WHISPERFILE%" -m "%MODELE_WHISPER%" -f "%BASE%.wav" -l fr %WHISPER_OPTIONS% -otxt -of "%BASE%" -np --prompt "%VOCABULAIRE%"
 rem Audio garde jusqu'a la fin de session (voir CONSERVER_AUDIO dans config.bat)
 ren "%BASE%.wav" "dictee-console-%RANDOM%%RANDOM%.wav" 2>nul
 if not exist "%BASE%.txt" (echo [ERREUR] Transcription echouee. & exit /b 1)

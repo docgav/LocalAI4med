@@ -99,6 +99,27 @@ exemples de dialogue (few-shot), plus efficace que de les mettre dans les consig
 Deux ou trois exemples suffisent ; au-delà, la génération ralentit.
 **Les exemples doivent être fictifs ou totalement anonymisés.**
 
+## Accélérer la transcription
+
+Pendant la transcription, la page affiche le temps restant estimé. L'estimation s'affine au fil
+des dictées sur un même poste. À la fin, elle indique la durée d'audio et le temps mis.
+
+Réglages déjà appliqués : décodage rapide (`WHISPER_OPTIONS=-bs 1`), tous les cœurs physiques
+du processeur (`WHISPER_THREADS` vide), silences de début et de fin retirés avant l'envoi.
+
+Pour aller plus vite :
+1. **Modèle Whisper plus petit** : `ggml-small-q5_1.bin` est environ 3 fois plus rapide que medium,
+   mais fait plus d'erreurs sur le vocabulaire médical (voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md)).
+2. **Ordinateur portable branché sur secteur**, en mode d'alimentation « Performances optimales » :
+   sur batterie, le processeur est bridé.
+3. **Disque USB 3** (prise bleue) : le modèle est relu à chaque dictée. Un vieux port USB 2 peut
+   ajouter plusieurs secondes.
+4. **Dicter par morceaux** plutôt qu'en un seul long enregistrement : chaque morceau est
+   transcrit pendant que vous préparez le suivant.
+
+À l'inverse, pour un peu plus de précision au prix de la vitesse : `set "WHISPER_OPTIONS=-bs 5"`
+dans `ressources\config_perso.bat`.
+
 ## Dépannage
 
 | Problème | Piste |

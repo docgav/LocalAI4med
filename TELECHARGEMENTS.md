@@ -75,8 +75,17 @@ https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_0.bin
 
 Placez le fichier dans `IA\ressources\`.
 
-Option plus précise, mais plus lente : `ggml-large-v3-turbo-q5_0.bin`, dans le même dépôt
-(https://huggingface.co/ggerganov/whisper.cpp). Il faut alors indiquer `set "MODELE_WHISPER=ressources\ggml-large-v3-turbo-q5_0.bin"` dans `ressources\config_perso.bat`.
+Autres modèles possibles, dans le même dépôt (https://huggingface.co/ggerganov/whisper.cpp) :
+
+| Fichier | Vitesse | Précision |
+|---|---|---|
+| `ggml-small-q5_1.bin` (~ 190 Mo) | environ 3 fois plus rapide que medium | moins bonne sur le vocabulaire médical |
+| `ggml-medium-q5_0.bin` (~ 540 Mo) | référence | bonne |
+| `ggml-large-v3-turbo-q5_0.bin` (~ 550 Mo) | à comparer sur votre poste | meilleure |
+
+Pour en utiliser un autre, placez-le dans `ressources\` et indiquez son nom dans
+`ressources\config_perso.bat`, par exemple : `set "MODELE_WHISPER=ressources\ggml-small-q5_1.bin"`.
+Gardez plusieurs fichiers pour comparer : la page affiche le temps mis après chaque dictée.
 
 ## 4. ffmpeg (facultatif : dictée de secours depuis la fenêtre noire)
 

@@ -128,7 +128,7 @@
     const hors = new OfflineAudioContext(1, n, 16000);
     const source = hors.createBufferSource();
     source.buffer = audio; source.connect(hors.destination); source.start();
-    const pcm = (await hors.startRendering()).getChannelData(0);
+    const pcm = retirerSilences((await hors.startRendering()).getChannelData(0));
     const tampon = new ArrayBuffer(44 + pcm.length * 2);
     const v = new DataView(tampon);
     const ecrire = (pos, txt) => { for (let i = 0; i < txt.length; i++) v.setUint8(pos + i, txt.charCodeAt(i)); };
@@ -143,6 +143,45 @@
     return new Blob([tampon], { type: 'audio/wav' });
   }
 
+  // Retire les silences de début et de fin (moins d'audio = transcription plus courte).
+  // Trames de 20 ms ; seuil relatif au niveau maximal ; marge de 0,3 s conservée de chaque côté.
+  function retirerSilences(pcm) {
+    const trame = 320, marge = 16000 * 0.3;
+    const niveaux = [];
+    for (let i = 0; i < pcm.length; i += trame) {
+      let somme = 0;
+      const fin = Math.min(pcm.length, i + trame);
+      for (let j = i; j < fin; j++) somme += pcm[j] * pcm[j];
+      niveaux.push(Math.sqrt(somme / (fin - i)));
+    }
+    const seuil = Math.max(0.005, Math.max(...niveaux) * 0.05);
+    const premier = niveaux.findIndex((n) => n > seuil);
+    if (premier < 0) return pcm;
+    let dernier = niveaux.length - 1;
+    while (dernier > premier && niveaux[dernier] <= seuil) dernier--;
+    const debut = Math.max(0, premier * trame - marge);
+    const fin = Math.min(pcm.length, (dernier + 1) * trame + marge);
+    return pcm.subarray(debut, fin);
+  }
+
+  // --- Estimation du temps de transcription ---
+  // Durée ≈ CHARGEMENT + facteur × durée audio. Le facteur est appris sur ce poste après chaque
+  // transcription (seul ce nombre est mémorisé dans le navigateur, aucune donnée patient).
+  const CHARGEMENT = 3;
+  function lireFacteur() {
+    try { const f = parseFloat(localStorage.getItem('facteurTranscription')); if (f > 0) return f; } catch {}
+    return 1;   // valeur de départ : autant de temps que la durée de l'audio
+  }
+  function apprendreFacteur(dureeAudio, duree) {
+    if (dureeAudio < 3) return;
+    const mesure = Math.min(10, Math.max(0.05, (duree - CHARGEMENT) / dureeAudio));
+    try { localStorage.setItem('facteurTranscription', String(0.5 * lireFacteur() + 0.5 * mesure)); } catch {}
+  }
+  function formaterDuree(s) {
+    s = Math.max(0, Math.round(s));
+    return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')}`;
+  }
+
   // --- Envoi à la passerelle ---
   async function transcrire() {
     if (!dernierAudio) return;
@@ -151,7 +190,23 @@
     el.fichier.disabled = true;
     el.reessayer.hidden = true;
     const t0 = Date.now();
-    etat('Transcription en cours…');
+    const dureeAudio = Math.max(0, (dernierAudio.wav.size - 44) / 32000);
+    const estimation = CHARGEMENT + lireFacteur() * dureeAudio;
+    let progression = 0, resteAuPoint = null, instantPoint = 0;
+    // Temps restant : estimation apprise, corrigée par l'avancement réel quand whisperfile le donne
+    // (il ne le donne que par tranches de 30 s d'audio).
+    const afficher = () => {
+      const ecoule = (Date.now() - t0) / 1000;
+      let reste = estimation - ecoule;
+      // Compte à rebours depuis la dernière progression reçue (évite les à-coups entre deux mises à jour).
+      if (resteAuPoint !== null) reste = resteAuPoint - (ecoule - instantPoint);
+      const pourcent = Math.min(99, Math.max(progression, Math.round((100 * ecoule) / (ecoule + Math.max(reste, 0.5)))));
+      etat(reste > 1 && progression < 100
+        ? `Transcription de ${formaterDuree(dureeAudio)} d'audio… reste environ ${formaterDuree(reste)} (${pourcent} %)`
+        : `Transcription de ${formaterDuree(dureeAudio)} d'audio… presque terminé`);
+    };
+    afficher();
+    const minuteur = setInterval(afficher, 500);
     try {
       // Si la passerelle a déjà sauvegardé ce fichier, on le retranscrit sans le renvoyer.
       const url = passerelle + '/transcrire' + (dernierAudio.fichier ? '?fichier=' + encodeURIComponent(dernierAudio.fichier) : '');
@@ -160,13 +215,42 @@
         headers: { 'Content-Type': 'audio/wav' },
         body: dernierAudio.fichier ? null : dernierAudio.wav,
       });
-      const r = await rep.json();
-      if (r.fichier) dernierAudio.fichier = r.fichier;
-      if (!rep.ok) throw new Error(r.erreur || 'erreur ' + rep.status);
-      if (!r.texte) throw new Error('aucun texte reconnu');
-      insererTexte(vues[vueActive].cibleDictee(), r.texte);
-      etat(`Dictée insérée (${Math.round((Date.now() - t0) / 1000)} s) – audio : dictees\\${r.fichier}`);
+      if (!rep.ok) {
+        const r = await rep.json().catch(() => ({}));
+        if (r.fichier) dernierAudio.fichier = r.fichier;
+        throw new Error(r.erreur || 'erreur ' + rep.status);
+      }
+      // Réponse en flux : une ligne JSON par événement (fichier, progression, puis texte ou erreur).
+      const lecteur = rep.body.getReader();
+      const decodeur = new TextDecoder('utf-8');
+      let reste = '', fin = null;
+      for (;;) {
+        const { value, done } = await lecteur.read();
+        if (done) break;
+        reste += decodeur.decode(value, { stream: true });
+        const lignes = reste.split('\n');
+        reste = lignes.pop();
+        for (const ligne of lignes) {
+          if (!ligne.trim()) continue;
+          const r = JSON.parse(ligne);
+          if (r.fichier) dernierAudio.fichier = r.fichier;
+          if (typeof r.progression === 'number' && r.progression > progression) {
+            progression = r.progression;
+            instantPoint = (Date.now() - t0) / 1000;
+            if (progression < 100) resteAuPoint = (instantPoint * (100 - progression)) / progression;
+          }
+          if ('texte' in r || r.erreur) fin = r;
+        }
+      }
+      if (!fin) throw new Error('connexion interrompue');
+      if (fin.erreur) throw new Error(fin.erreur);
+      if (!fin.texte) throw new Error('aucun texte reconnu');
+      clearInterval(minuteur);
+      insererTexte(vues[vueActive].cibleDictee(), fin.texte);
+      apprendreFacteur(fin.duree_audio, fin.duree);
+      etat(`Dictée insérée : ${formaterDuree(fin.duree_audio)} d'audio transcrites en ${formaterDuree(fin.duree)} – audio : dictees\\${fin.fichier}`);
     } catch (e) {
+      clearInterval(minuteur);
       etat('Transcription impossible : ' + e.message + (dernierAudio.fichier ? ` (audio conservé : dictees\\${dernierAudio.fichier})` : ''));
       el.reessayer.hidden = false;
     } finally {

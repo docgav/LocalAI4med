@@ -39,6 +39,11 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   passe par la même conversion WAV puis la même passerelle (`window.transcrireFichierAudio`). PID dans `journal/dictee.pid`
   (`scripts/arreter-dictee.bat`). Le port est transmis à la page par `app/dictee/port.txt`.
   Le stdout de whisperfile (qui contient le texte) ne va jamais dans `journal/`.
+  Vitesse : whisperfile utilise par défaut beam 5 et 4 threads ; la passerelle passe `-t` (cœurs
+  physiques ou `WHISPER_THREADS`) et `WHISPER_OPTIONS` (`-bs 1` = glouton). Réponse de `/transcrire`
+  en NDJSON : `{fichier, duree_audio}`, `{progression}` (lu dans `-pp` sur stderr, par tranches de
+  30 s), puis `{texte, duree}` ou `{erreur}`. Connexion coupée → whisperfile tué. La page retire les
+  silences de début/fin et estime le temps restant (facteur appris, seul nombre en localStorage).
   Dictée de secours (si PowerShell est bloqué) par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →
   whisperfile `-otxt`) écrit `app/dictee/dictee.txt` puis `app/dictee/pret.txt` (identifiant).
   La page interroge `pret.txt` toutes les 1,5 s et insère le texte quand l'identifiant change.
