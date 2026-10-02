@@ -44,7 +44,8 @@ if not exist journal mkdir journal
 if not exist dictees mkdir dictees
 if not exist app\dictee mkdir app\dictee
 del /q app\dictee\*.txt 2>nul
-> "app\dictee\port.txt" echo %PORT_DICTEE%
+rem Ports transmis a la page
+> "app\dictee\config.json" echo {"llm": %PORT%, "dictee": %PORT_DICTEE%}
 
 rem Liste des types de documents (fichiers de app\prompts ne commencant pas par _)
 dir /b /on "app\prompts\*.txt" | findstr /v /b /c:"_" > "app\prompts\_liste.txt"
@@ -53,9 +54,21 @@ rem Arrete un eventuel serveur reste ouvert (lance avec d'autres options).
 taskkill /f /im "%PROC%" >nul 2>&1
 timeout /t 1 /nobreak >nul
 
-echo Demarrage de la passerelle de dictee...
+rem --- Passerelle (page + dictee). Si elle ne demarre pas (PowerShell bloque) : mode secours,
+rem     la page est servie par llamafile et l'interface de discussion par defaut n'est pas disponible.
+echo Demarrage de la passerelle...
 call scripts\arreter-dictee.bat
-start "IA - dictee" /min powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dictee-serveur.ps1
+start "IA - passerelle" /min powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dictee-serveur.ps1
+set "MODE=secours"
+set /a ESSAI_P=0
+:attente_passerelle
+timeout /t 1 /nobreak >nul
+curl -s -f -o nul "http://127.0.0.1:%PORT_DICTEE%/etat" && (set "MODE=complet" & goto passerelle_ok)
+set /a ESSAI_P+=1
+if %ESSAI_P% lss 8 goto attente_passerelle
+:passerelle_ok
+if "%MODE%"=="complet" (set "URL=http://127.0.0.1:%PORT_DICTEE%/") else (set "URL=http://127.0.0.1:%PORT%/")
+if "%MODE%"=="secours" echo [ATTENTION] Passerelle indisponible (PowerShell bloque ?) : mode secours.
 echo Demarrage du modele de redaction...
 start "IA - serveur" /min cmd /c scripts\serveur.bat
 
@@ -77,10 +90,16 @@ pause
 exit /b 1
 
 :ouvrir
-start "" "http://127.0.0.1:%PORT%/"
+rem Fenetre InPrivate : l'historique des discussions est efface a sa fermeture.
+set "EDGE="
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" >nul 2>&1 && set "EDGE=1"
+reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe" >nul 2>&1 && set "EDGE=1"
+if "%NAVIGATEUR_PRIVE%"=="1" if defined EDGE (start "" msedge --inprivate "%URL%" & goto ouvert)
+start "" "%URL%"
+:ouvert
 cls
 echo ============================================================
-echo  IA locale prete : http://127.0.0.1:%PORT%/
+echo  IA locale prete : %URL%   (mode %MODE%)
 echo  Modele : %LLM_ACTIF%
 echo  Dictee : bouton "Dicter" dans la page (ou touche F2).
 echo  Secours si la dictee de la page ne marche pas : touche Entree ici.

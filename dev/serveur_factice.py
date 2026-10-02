@@ -1,7 +1,9 @@
 """Serveur factice pour tester l'interface sans llamafile (developpement uniquement).
 
-Sert app/ comme `llamafile --server --path app`, et imite /health et
-/v1/chat/completions en streaming. Usage : python3 dev/serveur_factice.py [port]
+Sert app/ comme `llamafile --server --path app` (mode secours), et imite /health, /props et
+/v1/chat/completions en streaming. Usage : python3 dev/serveur_factice.py [port] [--ui-defaut]
+Avec --ui-defaut, "/" renvoie une fausse interface de discussion llamafile (mode complet : la page
+est alors servie par la passerelle PowerShell et appelle cette API depuis une autre origine).
 Le fichier app/prompts/_liste.txt est regenere comme le fait Demarrer.bat.
 """
 import json
@@ -20,6 +22,19 @@ class Gestionnaire(SimpleHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
+    def end_headers(self):
+        # CORS comme llama-server (origine renvoyee telle quelle)
+        origine = self.headers.get("Origin")
+        if origine:
+            self.send_header("Access-Control-Allow-Origin", origine)
+            self.send_header("Access-Control-Allow-Headers", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
+
     def do_GET(self):
         if self.path.startswith("/health"):
             return self._json({"status": "ok"})
@@ -27,6 +42,15 @@ class Gestionnaire(SimpleHTTPRequestHandler):
             return self._json({"model_path": "ressources\\gemma-4-E2B-it-Q4_K_M.gguf",
                                "modalities": {"vision": True, "audio": False}})
         self.path = self.path.split("?")[0]
+        if UI_DEFAUT:
+            if self.path != "/":
+                return self.send_error(404)
+            corps = "<!doctype html><meta charset=utf-8><title>llama.cpp</title><h1>Interface llamafile factice</h1>".encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(corps)))
+            self.end_headers()
+            return self.wfile.write(corps)
         return super().do_GET()
 
     def do_POST(self):
@@ -63,8 +87,11 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         self.wfile.write(donnees)
 
 
+UI_DEFAUT = "--ui-defaut" in sys.argv
+
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    port = int(args[0]) if args else 8080
     prompts = APP / "prompts"
     liste = sorted(p.name for p in prompts.glob("*.txt") if not p.name.startswith("_"))
     (prompts / "_liste.txt").write_text("\n".join(liste) + "\n", encoding="utf-8")

@@ -17,11 +17,11 @@
 
   function etat(texte) { el.info.textContent = texte; }
 
-  // --- Connexion à la passerelle (port écrit par Demarrer.bat dans dictee/port.txt) ---
+  // --- Connexion à la passerelle (port écrit par Demarrer.bat dans dictee/config.json) ---
   async function connecter() {
     try {
-      const port = (await lireTexte('dictee/port.txt')).trim();
-      const url = `http://127.0.0.1:${port}`;
+      await configPrete;
+      const url = `http://127.0.0.1:${config.dictee}`;
       const r = await (await fetch(url + '/etat', { cache: 'no-store' })).json();
       if (!r.whisper || !r.modele) throw new Error('whisperfile ou son modèle absent de ressources\\');
       passerelle = url;
@@ -246,9 +246,9 @@
       if (fin.erreur) throw new Error(fin.erreur);
       if (!fin.texte) throw new Error('aucun texte reconnu');
       clearInterval(minuteur);
-      insererTexte(vues[vueActive].cibleDictee(), fin.texte);
+      const resultat = await deposerTexte(fin.texte);
       apprendreFacteur(fin.duree_audio, fin.duree);
-      etat(`Dictée insérée : ${formaterDuree(fin.duree_audio)} d'audio transcrites en ${formaterDuree(fin.duree)} – audio : dictees\\${fin.fichier}`);
+      etat(`Dictée ${resultat} – ${formaterDuree(fin.duree_audio)} d'audio transcrites en ${formaterDuree(fin.duree)} – audio : dictees\\${fin.fichier}`);
     } catch (e) {
       clearInterval(minuteur);
       etat('Transcription impossible : ' + e.message + (dernierAudio.fichier ? ` (audio conservé : dictees\\${dernierAudio.fichier})` : ''));

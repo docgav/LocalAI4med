@@ -1,11 +1,24 @@
 // Fonctions partagées par les onglets Rédaction et Discussion.
-// Servi par llamafile (--path app) : l'API est sur la même origine. Rien n'est envoyé ailleurs.
+// Mode complet : page servie par la passerelle (scripts/dictee-serveur.ps1), API du modèle sur le port
+// de llamafile, qui sert aussi son interface de discussion par défaut (affichée dans l'onglet Discussion).
+// Mode secours (PowerShell bloqué) : page servie par llamafile (--path app), API sur la même origine.
+// Tout reste sur 127.0.0.1 : rien n'est envoyé ailleurs.
 'use strict';
 
 const $ = (id) => document.getElementById(id);
 
 // État du serveur, lu sur /props : nom du modèle et prise en charge des images (mmproj chargé).
 const serveur = { pret: false, modele: '', vision: false };
+
+// Ports écrits par Demarrer.bat dans dictee/config.json.
+const config = { llm: 8080, dictee: 8081, mode: 'secours', api: '' };
+const configPrete = (async () => {
+  try { Object.assign(config, JSON.parse(await lireTexte('dictee/config.json'))); } catch {}
+  if (location.port === String(config.dictee)) {
+    config.mode = 'complet';
+    config.api = `http://127.0.0.1:${config.llm}/`;
+  }
+})();
 
 // --- Lecture de fichiers texte en UTF-8, quel que soit l'en-tête renvoyé par le serveur ---
 async function lireTexte(url) {
@@ -41,9 +54,10 @@ function analyserModele(texte, fichier) {
 // --- Appel au modèle en streaming (API compatible OpenAI de llamafile) ---
 // surTexte(texteComplet) est appelé à chaque morceau reçu ; surEtat(message) pour l'affichage.
 async function appelerModele(messages, { signal, surTexte, surEtat, max_tokens = 2048 } = {}) {
+  await configPrete;
   const debut = performance.now();
   let texte = '', timings = null;
-  const rep = await fetch('v1/chat/completions', {
+  const rep = await fetch(config.api + 'v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal,
@@ -86,7 +100,12 @@ async function appelerModele(messages, { signal, surTexte, surEtat, max_tokens =
 }
 
 // --- Onglets ---
-const vues = { redaction: { cibleDictee: () => $('notes') }, discussion: { cibleDictee: () => $('saisie') } };
+// Zone qui reçoit la dictée dans chaque onglet. L'interface de discussion de llamafile (mode complet)
+// est sur une autre origine : la dictée y est copiée dans le presse-papier.
+const vues = {
+  redaction: { cibleDictee: () => $('notes') },
+  discussion: { cibleDictee: () => (config.mode === 'complet' ? null : $('saisie')) },
+};
 let vueActive = 'redaction';
 
 function afficherVue(nom) {
@@ -114,9 +133,26 @@ function insererTexte(zone, texte) {
   setTimeout(() => zone.classList.remove('flash'), 1500);
 }
 
+// Insère le texte dicté dans l'onglet affiché, ou le copie dans le presse-papier s'il n'y a pas de
+// zone accessible. Renvoie un court compte rendu pour l'affichage.
+async function deposerTexte(texte) {
+  const cible = vues[vueActive].cibleDictee();
+  if (cible) { insererTexte(cible, texte); return 'insérée'; }
+  const bouton = $('copier-dictee');
+  bouton.onclick = () => { copierTexte(texte, bouton); };
+  try {
+    await navigator.clipboard.writeText(texte.trim());
+    bouton.hidden = false;
+    return 'copiée : collez-la (Ctrl+V) dans la discussion';
+  } catch {
+    bouton.hidden = false;   // la page n'avait pas le focus : copie au clic
+    return 'prête : cliquez sur « Copier la dictée » puis collez-la (Ctrl+V)';
+  }
+}
+
 async function insererDerniereDictee() {
-  insererTexte(vues[vueActive].cibleDictee(), await lireTexte('dictee/dictee.txt'));
-  $('info-dictee').textContent = 'Dictée insérée à ' + new Date().toLocaleTimeString('fr-FR');
+  const resultat = await deposerTexte(await lireTexte('dictee/dictee.txt'));
+  $('info-dictee').textContent = `Dictée ${resultat} (${new Date().toLocaleTimeString('fr-FR')})`;
 }
 
 let derniereDictee = null;  // identifiant contenu dans dictee/pret.txt
@@ -138,10 +174,11 @@ async function surveillerDictee() {
 async function surveillerServeur() {
   const etat = $('etat-serveur');
   try {
-    const rep = await fetch('health', { cache: 'no-store' });
+    await configPrete;
+    const rep = await fetch(config.api + 'health', { cache: 'no-store' });
     serveur.pret = rep.ok;
     if (rep.ok && !serveur.modele) {
-      const props = await (await fetch('props', { cache: 'no-store' })).json();
+      const props = await (await fetch(config.api + 'props', { cache: 'no-store' })).json();
       serveur.modele = String(props.model_path || '').split(/[\\/]/).pop().replace(/\.gguf$/i, '');
       serveur.vision = !!(props.modalities && props.modalities.vision);
       document.dispatchEvent(new Event('serveur-pret'));

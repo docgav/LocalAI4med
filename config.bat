@@ -39,6 +39,9 @@ set "PORT_DICTEE=8081"
 rem Audio des dictees (dictees\*.wav) : 0 = efface en fin de session, 1 = conserve.
 set "CONSERVER_AUDIO=0"
 
+rem --- Navigateur : 1 = fenetre InPrivate d'Edge (historique des discussions efface a la fermeture).
+set "NAVIGATEUR_PRIVE=1"
+
 rem --- Enregistrement en secours depuis la fenetre noire (ffmpeg) ---
 set "FFMPEG=ressources\ffmpeg.exe"
 

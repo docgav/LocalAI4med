@@ -1,5 +1,7 @@
-# Passerelle de dictee : recoit l'audio enregistre par la page (WAV 16 kHz mono), l'enregistre
-# dans dictees\, le transcrit avec whisperfile et renvoie le texte en JSON.
+# Passerelle locale :
+#  - sert la page de l'IA (dossier app\) ;
+#  - recoit l'audio enregistre par la page (WAV 16 kHz mono), l'enregistre dans dictees\,
+#    le transcrit avec whisperfile et renvoie le texte.
 # Ecoute uniquement sur 127.0.0.1 et n'accepte que les requetes venant de la page de l'IA.
 # Lance par Demarrer.bat, qui fournit la configuration par variables d'environnement.
 # Compatible Windows PowerShell 5.1 (pas de syntaxe PowerShell 7).
@@ -18,7 +20,12 @@ $whisper = Chemin $env:WHISPERFILE
 $modele  = Chemin $env:MODELE_WHISPER
 $vocab   = ($env:VOCABULAIRE -replace '"', '')
 $port    = [int]$env:PORT_DICTEE
-$origines = @("http://127.0.0.1:$($env:PORT)", "http://localhost:$($env:PORT)")
+$origines = @("http://127.0.0.1:$($env:PORT_DICTEE)", "http://localhost:$($env:PORT_DICTEE)",
+              "http://127.0.0.1:$($env:PORT)", "http://localhost:$($env:PORT)")
+$dossierApp = [IO.Path]::GetFullPath((Join-Path $racine 'app'))
+$typesMime = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8';
+    '.css' = 'text/css; charset=utf-8'; '.json' = 'application/json; charset=utf-8';
+    '.txt' = 'text/plain; charset=utf-8'; '.svg' = 'image/svg+xml'; '.png' = 'image/png'; '.ico' = 'image/x-icon' }
 $dossier = Join-Path $racine 'dictees'
 $journal = Join-Path $racine 'journal'
 New-Item -ItemType Directory -Force $dossier, $journal | Out-Null
@@ -80,6 +87,32 @@ function Repondre($flux, [int]$code, $objet, [string]$origine) {
         "Access-Control-Allow-Headers: Content-Type`r`n" +
         "Access-Control-Max-Age: 600`r`n" +
         "Vary: Origin`r`n" +
+        "Connection: close`r`n`r`n"
+    $e = [Text.Encoding]::ASCII.GetBytes($entete)
+    $flux.Write($e, 0, $e.Length)
+    if ($corps.Length -gt 0) { $flux.Write($corps, 0, $corps.Length) }
+    $flux.Flush()
+}
+
+# Fichier statique du dossier app\ (la page elle-meme). Refuse tout chemin hors de ce dossier.
+function Servir-Fichier($flux, [string]$chemin) {
+    $relatif = [Uri]::UnescapeDataString(($chemin -split '\?')[0]).TrimStart('/')
+    if ($relatif -eq '') { $relatif = 'index.html' }
+    $complet = [IO.Path]::GetFullPath((Join-Path $dossierApp $relatif))
+    $ext = [IO.Path]::GetExtension($complet).ToLower()
+    $code = 200
+    if (-not $complet.StartsWith($dossierApp + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path $complet -PathType Leaf) -or -not $typesMime.ContainsKey($ext)) {
+        $code = 404
+        $corps = [Text.Encoding]::UTF8.GetBytes('Introuvable')
+        $type = 'text/plain; charset=utf-8'
+    } else {
+        $corps = [IO.File]::ReadAllBytes($complet)
+        $type = $typesMime[$ext]
+    }
+    $entete = "HTTP/1.1 $code $($statuts[$code])`r`n" +
+        "Content-Type: $type`r`n" +
+        "Content-Length: $($corps.Length)`r`n" +
+        "Cache-Control: no-store`r`n" +
         "Connection: close`r`n`r`n"
     $e = [Text.Encoding]::ASCII.GetBytes($entete)
     $flux.Write($e, 0, $e.Length)
@@ -191,6 +224,8 @@ while ($true) {
             Ecrire-Ligne $flux @{ fichier = $nom; duree_audio = $dureeAudio; threads = $threads }
             $texte = Transcrire $wav $flux
             Ecrire-Ligne $flux @{ texte = $texte; fichier = $nom; duree_audio = $dureeAudio; duree = [Math]::Round(((Get-Date) - $debut).TotalSeconds, 1) }
+        } elseif ($req.Methode -eq 'GET') {
+            Servir-Fichier $flux $chemin
         } else {
             Repondre $flux 404 @{ erreur = 'adresse inconnue' } $origine
         }

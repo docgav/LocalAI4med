@@ -28,15 +28,24 @@ Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
 
 ### Onglet Discussion
 
-Échange libre avec l'IA, comme l'interface par défaut de llama.cpp. On peut joindre (bouton **Joindre…**,
-glisser-déposer ou coller) :
-- des **PDF** : le texte est extrait localement ; un PDF scanné est envoyé en images (3 premières pages) ;
-- des **images** (photo d'ordonnance, capture d'écran…) : nécessite le fichier `mmproj` du modèle
-  (voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md)). En haut à droite, « (images) » indique qu'il est chargé ;
-- des fichiers texte.
+C'est **l'interface de discussion par défaut de llamafile** (celle de llama.cpp), affichée dans la page
+et déjà réglée : message système en français adapté à la neurologie, température basse, titres des
+discussions sans appel au modèle. Toutes ses fonctions sont disponibles : historique des discussions,
+pièces jointes (PDF, images, texte), modification et régénération des réponses, réglages (roue dentée).
+- Les **images** nécessitent le fichier `mmproj` du modèle (voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md)) ;
+  en haut à droite de la page, « (images) » indique qu'il est chargé.
+- La **dictée** n'est pas insérée directement dans cette interface : elle est copiée dans le presse-papier,
+  il suffit de coller (Ctrl+V). Cliquer sur « Dicter » (F2 ne marche pas quand on est dans la discussion).
+- « Ouvrir dans un onglet séparé » l'affiche en plein écran.
+- Les préréglages sont dans `app\discussion-config.json` (message système, température…), lus au démarrage.
 
-La dictée s'insère dans l'onglet affiché. **Nouvelle discussion** efface tout. Une discussion trop longue
-dépasse la mémoire du modèle (`CONTEXTE`) : en commencer une nouvelle.
+**Confidentialité** : cette interface garde l'historique des discussions dans le navigateur. La page est
+donc ouverte dans une **fenêtre InPrivate** d'Edge, dont tout le contenu est effacé à sa fermeture
+(réglage `NAVIGATEUR_PRIVE=1`). Conséquence : l'autorisation du micro est redemandée à chaque session.
+
+**Mode secours** : si PowerShell est bloqué sur le poste, la page est servie par llamafile et l'onglet
+Discussion revient à une discussion simplifiée intégrée (mêmes pièces jointes, dictée insérée directement).
+La fenêtre noire indique « mode complet » ou « mode secours » au démarrage.
 
 Pour la dictée de secours (fenêtre noire), le micro est demandé au premier usage sur un poste
 (`scripts\micro.bat`, résultat dans `micro.txt`). Pour en changer : supprimer `micro.txt`.

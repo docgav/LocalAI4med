@@ -24,12 +24,24 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
 - Modèle : `Demarrer.bat` choisit E2B ou E4B (`choice`, selon les fichiers présents) et passe
   `LLM_ACTIF` / `MMPROJ_ACTIF` à `scripts/serveur.bat` par l'environnement ; `--mmproj` seulement si le
   fichier existe (images). La page lit `/props` (`model_path`, `modalities.vision`).
-- Interface `app/` en deux onglets dans une seule page : `commun.js` (API en streaming, onglets,
-  dictée, état), `redaction.js`, `discussion.js` (images redimensionnées en JPEG et envoyées en
-  `image_url` ; PDF lus par pdf.js 3.11 copié dans `app/lib/pdfjs`, scripts classiques, pas de .mjs).
-  Chaque onglet est dans un bloc `{ }` pour éviter les collisions de noms globaux.
-- `llamafile.exe --server --path app` (v0.10.6, basé sur llama-server) sert l'interface `app/`
-  et l'API OpenAI `/v1/chat/completions` sur la même origine. `/health` renvoie 200 quand prêt.
+- Deux modes, choisis par `Demarrer.bat` selon que la passerelle PowerShell répond (`/etat`) :
+  - **complet** : la passerelle (`scripts/dictee-serveur.ps1`, port `PORT_DICTEE`) sert `app/` ET la
+    dictée ; llamafile tourne SANS `--path`, donc sert son interface web par défaut, préréglée par
+    `--ui-config-file app/discussion-config.json` (clés de `tools/ui/src/lib/constants/settings-keys`
+    de llama.cpp : `systemMessage`, `temperature`…). La page appelle l'API sur `http://127.0.0.1:PORT/`
+    (CORS de llama-server : `*` par défaut) et affiche l'interface par défaut en iframe (onglet
+    Discussion) ; la dictée y est copiée dans le presse-papier (autre origine).
+  - **secours** (PowerShell bloqué) : `llamafile --path app` sert la page ; API même origine ;
+    `discussion.js` fournit la discussion intégrée (images en `image_url`, PDF par pdf.js 3.11 dans
+    `app/lib/pdfjs`, scripts classiques, pas de .mjs).
+  La page lit les ports dans `app/dictee/config.json` (écrit par `Demarrer.bat`) ; mode complet si
+  `location.port` = port de la passerelle. Navigateur : Edge InPrivate (`NAVIGATEUR_PRIVE`), car
+  l'interface par défaut garde l'historique en IndexedDB.
+- Interface `app/` : `commun.js` (config, API en streaming, onglets, dépôt de la dictée), `dictee.js`,
+  `redaction.js`, `discussion.js`. Chaque onglet est dans un bloc `{ }` (pas de collisions globales).
+  `[hidden]` forcé en `display: none !important` (les `.colonne` sont en flex).
+- llamafile 0.10.6 (basé sur llama-server) : API OpenAI `/v1/chat/completions`, `/health` (200 quand
+  prêt), `/props`.
 - whisperfile 0.10.6 est **CLI uniquement** (pas de whisper-server dans la distribution).
   Dictée principale : `app/dictee.js` enregistre dans le navigateur (MediaRecorder), convertit en WAV
   16 kHz mono (OfflineAudioContext) et POST vers `scripts/dictee-serveur.ps1`, passerelle PowerShell 5.1
@@ -37,7 +49,8 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   `dictees/dictee-AAAAMMJJ-HHMMSS.wav`, lance whisperfile, renvoie `{texte, fichier}` ;
   `?fichier=` retranscrit un fichier déjà sauvegardé. « Fichier audio… » (et un audio déposé dans Discussion)
   passe par la même conversion WAV puis la même passerelle (`window.transcrireFichierAudio`). PID dans `journal/dictee.pid`
-  (`scripts/arreter-dictee.bat`). Le port est transmis à la page par `app/dictee/port.txt`.
+  (`scripts/arreter-dictee.bat`). Elle sert aussi les fichiers de `app/` (GET, types limités, pas de
+  sortie du dossier).
   Le stdout de whisperfile (qui contient le texte) ne va jamais dans `journal/`.
   Vitesse : whisperfile utilise par défaut beam 5 et 4 threads ; la passerelle passe `-t` (cœurs
   physiques ou `WHISPER_THREADS`) et `WHISPER_OPTIONS` (`-bs 1` = glouton). Réponse de `/transcrire`

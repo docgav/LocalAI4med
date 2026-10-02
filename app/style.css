@@ -11,6 +11,7 @@
   }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0; background: var(--fond); color: var(--texte);
   font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
@@ -54,6 +55,8 @@ footer { padding: 10px 16px; font-size: 12px; color: var(--alerte); }
 /* Discussion */
 .discussion { max-width: 1000px; margin: 0 auto; height: calc(100vh - 110px); min-height: 400px; }
 #vue-discussion.survol .discussion { outline: 2px dashed var(--accent); }
+#ui-llama { flex: 1; width: 100%; border: none; border-radius: 6px; background: var(--fond); }
+#discussion-llama { max-width: none; }
 #fil { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px; }
 #saisie { flex: none; min-height: 70px; resize: vertical; }
 .bulle { max-width: 85%; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--bord); position: relative; }

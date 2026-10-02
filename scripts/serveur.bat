@@ -8,4 +8,8 @@ set "OPT_MMPROJ="
 if exist "%MMPROJ_ACTIF%" set "OPT_MMPROJ=--mmproj "%MMPROJ_ACTIF%""
 set "OPT_THREADS="
 if defined THREADS set "OPT_THREADS=-t %THREADS%"
-"%LLAMAFILE%" --server -m "%LLM_ACTIF%" %OPT_MMPROJ% --host 127.0.0.1 --port %PORT% -c %CONTEXTE% --path app %OPT_THREADS% %OPTIONS_LLM% > journal\serveur.log 2>&1
+rem Mode complet : interface de discussion par defaut de llamafile, preconfiguree (app\discussion-config.json).
+rem Mode secours : llamafile sert la page de l'IA (app\).
+set "OPT_UI=--ui-config-file app\discussion-config.json"
+if /i "%MODE%"=="secours" set "OPT_UI=--path app"
+"%LLAMAFILE%" --server -m "%LLM_ACTIF%" %OPT_MMPROJ% --host 127.0.0.1 --port %PORT% -c %CONTEXTE% %OPT_UI% %OPT_THREADS% %OPTIONS_LLM% > journal\serveur.log 2>&1

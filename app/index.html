@@ -17,6 +17,7 @@
     <button id="dicter" class="principal" disabled title="Dicter (F2)">🎙 Dicter</button>
     <meter id="niveau" min="0" max="1" value="0" hidden></meter>
     <button id="reessayer" hidden>Réessayer</button>
+    <button id="copier-dictee" hidden>Copier la dictée</button>
     <button id="audio-fichier" disabled title="Transcrire un fichier audio (wav, mp3, m4a…)">Fichier audio…</button>
     <input id="audio-choix" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.opus,.webm,.aac,.flac" hidden>
     <button id="reecouter" hidden title="Réécouter le dernier enregistrement">▶</button>
@@ -60,7 +61,16 @@
 </main>
 
 <main id="vue-discussion" class="vue" hidden>
-  <section class="colonne discussion">
+  <!-- Mode complet : interface de discussion par défaut de llamafile (préréglée par discussion-config.json) -->
+  <section id="discussion-llama" class="colonne discussion" hidden>
+    <iframe id="ui-llama" title="Discussion avec l'IA"></iframe>
+    <div class="ligne discret">
+      La dictée est copiée dans le presse-papier : collez-la avec Ctrl+V.
+      <a id="ui-llama-lien" target="_blank" rel="noopener">Ouvrir dans un onglet séparé</a>
+    </div>
+  </section>
+  <!-- Mode secours : discussion intégrée à la page -->
+  <section id="discussion-perso" class="colonne discussion">
     <div id="fil" aria-live="polite"></div>
     <div id="pieces"></div>
     <textarea id="saisie" rows="3" placeholder="Votre message… (Entrée : envoyer, Maj+Entrée : retour à la ligne). Glissez ici des images ou des PDF."></textarea>

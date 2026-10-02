@@ -1,4 +1,7 @@
-// Onglet Discussion : échange libre avec le modèle, avec images et documents (PDF, texte) joints.
+// Onglet Discussion.
+// Mode complet : affiche l'interface de discussion par défaut de llamafile (iframe), préréglée par
+// discussion-config.json au lancement du serveur.
+// Mode secours : discussion intégrée ci-dessous, avec images et documents (PDF, texte) joints.
 // Les PDF sont lus localement par pdf.js (app/lib/pdfjs). Rien n'est conservé après « Nouvelle discussion ».
 'use strict';
 
@@ -6,7 +9,7 @@
   const el = {
     fil: $('fil'), saisie: $('saisie'), envoyer: $('envoyer'), arreter: $('arreter-discussion'),
     joindre: $('joindre'), fichier: $('fichier'), pieces: $('pieces'), nouvelle: $('nouvelle'),
-    zone: $('vue-discussion'), info: $('info-discussion'),
+    zone: $('discussion-perso'), info: $('info-discussion'),
   };
 
   const TAILLE_IMAGE = 1024;      // côté maximal des images envoyées (px)
@@ -18,9 +21,22 @@
   let enAttente = [];    // pièces jointes du prochain message : {type: 'image', nom, url} | {type: 'texte', nom, contenu}
   let controleur = null;
 
-  lireTexte('prompts/_discussion.txt')
-    .then((t) => { const c = analyserModele(t, '_discussion.txt').consignes; if (c) consignes = c; })
+  // Même message système que l'interface de llamafile.
+  lireTexte('discussion-config.json')
+    .then((t) => { const c = JSON.parse(t).systemMessage; if (c) consignes = c; })
     .catch(() => {});
+
+  // Mode complet : interface de llamafile, chargée à la première ouverture de l'onglet.
+  configPrete.then(() => {
+    if (config.mode !== 'complet') return;
+    const url = `http://127.0.0.1:${config.llm}/`;
+    $('discussion-perso').hidden = true;
+    $('discussion-llama').hidden = false;
+    $('ui-llama-lien').href = url;
+    const charger = () => { if (!$('ui-llama').src) $('ui-llama').src = url; };
+    if (vueActive === 'discussion') charger();
+    document.querySelector('[data-vue=discussion]').addEventListener('click', charger);
+  });
 
   // --- Rendu Markdown minimal et sûr (le texte est échappé avant mise en forme) ---
   function echapper(t) {
