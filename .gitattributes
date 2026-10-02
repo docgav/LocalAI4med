@@ -1,4 +1,4 @@
-# Les scripts Windows doivent garder des fins de ligne CRLF
-*.bat text eol=crlf
-*.ps1 text eol=crlf
-*.txt text eol=crlf
+# Scripts Windows stockes directement en CRLF dans le depot, pour qu'ils
+# fonctionnent meme telecharges un par un depuis GitHub (bouton "Raw").
+*.bat -text
+*.ps1 -text

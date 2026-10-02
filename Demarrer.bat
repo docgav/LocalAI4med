@@ -9,6 +9,8 @@ cd /d "%~dp0"
 call config.bat
 title IA locale - dictaphone
 
+if not exist "app\index.html" (echo [ERREUR] Dossier app incomplet : recopiez le contenu du ZIP. & pause & exit /b 1)
+if not exist "app\prompts\" (echo [ERREUR] Dossier app\prompts manquant : recopiez le contenu du ZIP. & pause & exit /b 1)
 if not exist "%LLAMAFILE%"  (echo [ERREUR] %LLAMAFILE% introuvable. & pause & exit /b 1)
 if not exist "%MODELE_LLM%" (echo [ERREUR] Modele introuvable : %MODELE_LLM% & pause & exit /b 1)
 if not exist "%WHISPERFILE%"    echo [ATTENTION] %WHISPERFILE% introuvable : dictee indisponible.
