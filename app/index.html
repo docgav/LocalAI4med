@@ -13,7 +13,14 @@
     <button role="tab" data-vue="redaction" aria-selected="true">Rédaction</button>
     <button role="tab" data-vue="discussion" aria-selected="false">Discussion</button>
   </nav>
-  <span id="info-dictee" class="discret">Dictée : touche Entrée dans la fenêtre « dictaphone »</span>
+  <div class="dictee">
+    <button id="dicter" class="principal" disabled title="Dicter (F2)">🎙 Dicter</button>
+    <meter id="niveau" min="0" max="1" value="0" hidden></meter>
+    <button id="reessayer" hidden>Réessayer</button>
+    <button id="reecouter" hidden title="Réécouter le dernier enregistrement">▶</button>
+    <select id="micro" hidden title="Micro"></select>
+    <span id="info-dictee" class="discret">Connexion à la dictée…</span>
+  </div>
   <span id="etat-serveur" class="etat">Serveur : …</span>
 </header>
 
@@ -24,7 +31,7 @@
       <select id="type"></select>
     </div>
     <label for="notes">Notes / dictée</label>
-    <textarea id="notes" placeholder="Dictez depuis la fenêtre noire, ou tapez vos notes ici…"></textarea>
+    <textarea id="notes" placeholder="Dictez (bouton « Dicter » ou F2), ou tapez vos notes ici…"></textarea>
     <div class="boutons">
       <button id="rediger" class="principal" title="Ctrl+Entrée">Rédiger</button>
       <button id="stop" hidden>Arrêter</button>
@@ -68,9 +75,10 @@
 
 <footer>
   Réponses générées localement : relecture obligatoire, en particulier des posologies.
-  Rien n'est envoyé hors de cet ordinateur ; effacez la page puis « Q » dans la fenêtre dictaphone en fin de session.
+  Rien n'est envoyé hors de cet ordinateur ; en fin de session, effacez la page puis tapez « Q » dans la fenêtre noire.
 </footer>
 <script src="commun.js"></script>
+<script src="dictee.js"></script>
 <script src="redaction.js"></script>
 <script src="discussion.js"></script>
 </body>

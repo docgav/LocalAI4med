@@ -9,12 +9,19 @@ Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
 1. Double-cliquer sur `Demarrer.bat`. Si les deux versions de Gemma sont présentes, taper `1` (E2B, rapide)
    ou `2` (E4B, plus précis, 16 Go de RAM conseillés) ; sans réponse, E2B est choisi après 10 s.
    Le modèle se charge, puis la page s'ouvre dans le navigateur.
-2. La fenêtre noire sert de **dictaphone** : `Entrée` pour dicter, `q` pour arrêter l'enregistrement.
-   Le texte transcrit s'insère automatiquement dans « Notes / dictée ». On peut aussi taper les notes.
+2. Dicter avec le bouton **🎙 Dicter** en haut de la page (ou la touche `F2`), puis **Arrêter** (ou `F2`).
+   Au premier usage, le navigateur demande l'autorisation d'utiliser le micro : accepter.
+   Le texte transcrit s'insère dans l'onglet affiché. On peut aussi taper les notes.
+   - Chaque enregistrement est sauvegardé dans `dictees\` (nom affiché). En cas d'échec de la
+     transcription, **Réessayer** relance sur le même fichier ; **▶** réécoute le dernier enregistrement.
+   - Si plusieurs micros sont branchés, une liste permet de choisir.
+   - Les fichiers audio sont effacés à l'arrêt (`Q`), sauf si `CONSERVER_AUDIO=1` (réglages).
+   - Secours : si le bouton reste grisé (PowerShell bloqué sur le poste), dicter depuis la fenêtre
+     noire : `Entrée` pour commencer, `q` pour arrêter.
 3. Choisir le type de document, cliquer sur **Rédiger** (ou `Ctrl+Entrée`).
 4. Corriger directement le texte, ou donner une consigne (« plus court »…) puis **Modifier**.
 5. **Copier**, coller dans le DPI.
-6. En fin de session : **Tout effacer** dans la page, puis `Q` dans la fenêtre dictaphone
+6. En fin de session : **Tout effacer** dans la page, puis `Q` dans la fenêtre noire
    (arrêt du serveur, effacement des dictées, vidage du presse-papier).
 
 ### Onglet Discussion
@@ -29,8 +36,8 @@ glisser-déposer ou coller) :
 La dictée s'insère dans l'onglet affiché. **Nouvelle discussion** efface tout. Une discussion trop longue
 dépasse la mémoire du modèle (`CONTEXTE`) : en commencer une nouvelle.
 
-Au premier lancement sur un poste, le micro est demandé (`scripts\micro.bat`, résultat dans `micro.txt`).
-Pour changer de micro : supprimer `micro.txt`.
+Pour la dictée de secours (fenêtre noire), le micro est demandé au premier usage sur un poste
+(`scripts\micro.bat`, résultat dans `micro.txt`). Pour en changer : supprimer `micro.txt`.
 
 ## Contenu du disque
 
@@ -47,8 +54,9 @@ IA/
 ├── app/                  interface web (servie par llamafile) ; lib/pdfjs : lecture des PDF
 │   ├── prompts/          un fichier .txt par type de document
 │   └── dictee/           dernière transcription (temporaire, effacée à l'arrêt)
-├── scripts/              dictee.bat, micro.ps1, serveur.bat, nettoyer.bat
-├── dictees/              audio temporaire (effacé après transcription)
+├── scripts/              dictee-serveur.ps1 (passerelle de dictée), serveur.bat, nettoyer.bat,
+│                         dictee.bat + micro.ps1 (dictée de secours)
+├── dictees/              enregistrements audio de la session (effacés à l'arrêt)
 ├── journal/              serveur.log (diagnostic)
 └── dev/                  serveur factice pour tester l'interface sans modèle
 ```
@@ -95,7 +103,8 @@ Deux ou trois exemples suffisent ; au-delà, la génération ralentit.
 |---|---|
 | « Le serveur n'a pas démarré » | Lire la fin de `journal\serveur.log`, affichée à l'écran. Vérifier le nom exact du modèle dans `config.bat` et les doubles extensions cachées (`llamafile.exe.exe`). Tester `llamafile.exe --version` dans une invite de commandes. Antivirus. |
 | Page sans types de document | Lancer par `Demarrer.bat` (il génère `app\prompts\_liste.txt`). |
-| La dictée ne démarre pas | Nom du micro : supprimer `micro.txt`. Si PowerShell est bloqué : écrire le nom du micro à la main dans `micro.txt` (liste : `ressources\ffmpeg.exe -list_devices true -f dshow -i dummy`). |
+| Bouton « Dicter » grisé | Passerelle de dictée non lancée : PowerShell bloqué par le poste, ou whisperfile / son modèle absent de `ressources\` (le survol du bouton indique la cause). Utiliser la dictée de secours de la fenêtre noire. |
+| La dictée de secours ne démarre pas | Nom du micro : supprimer `micro.txt`. Si PowerShell est bloqué : écrire le nom du micro à la main dans `micro.txt` (liste : `ressources\ffmpeg.exe -list_devices true -f dshow -i dummy`). |
 | Lenteur | La vitesse (tokens/s) s'affiche après chaque rédaction. Fermer les autres applications, réduire `CONTEXTE`, raccourcir les exemples. |
 | Le modèle « réfléchit » longtemps | Ajouter `--reasoning-budget 0` dans `OPTIONS_LLM` (`config.bat`). |
 

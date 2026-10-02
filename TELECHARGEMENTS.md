@@ -14,7 +14,7 @@ votre ordinateur personnel. Aucun ne nécessite d'installation.
 | `mmproj-E4B.gguf` (facultatif : images) | quelques centaines de Mo |
 | `whisperfile.exe` | ~ 300 Mo |
 | `ggml-medium-q5_0.bin` | ~ 540 Mo |
-| `ffmpeg.exe` | ~ 100 Mo |
+| `ffmpeg.exe` (facultatif : dictée de secours) | ~ 100 Mo |
 
 Avant tout : dans l'Explorateur, menu **Affichage** → **Afficher** → cochez
 **Extensions de noms de fichiers**. Vous verrez ainsi les noms complets des fichiers.
@@ -78,7 +78,9 @@ Placez le fichier dans `IA\ressources\`.
 Option plus précise, mais plus lente : `ggml-large-v3-turbo-q5_0.bin`, dans le même dépôt
 (https://huggingface.co/ggerganov/whisper.cpp). Il faut alors indiquer `set "MODELE_WHISPER=ressources\ggml-large-v3-turbo-q5_0.bin"` dans `ressources\config_perso.bat`.
 
-## 4. ffmpeg (enregistrement du micro)
+## 4. ffmpeg (facultatif : dictée de secours depuis la fenêtre noire)
+
+La dictée de la page n'en a pas besoin. ffmpeg ne sert que si PowerShell est bloqué sur le poste.
 
 1. Allez sur https://www.gyan.dev/ffmpeg/builds/. Ce site est cité par le site officiel ffmpeg.org.
 2. Section **release builds** : téléchargez `ffmpeg-release-essentials.zip`.

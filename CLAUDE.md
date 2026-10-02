@@ -31,7 +31,14 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
 - `llamafile.exe --server --path app` (v0.10.6, basé sur llama-server) sert l'interface `app/`
   et l'API OpenAI `/v1/chat/completions` sur la même origine. `/health` renvoie 200 quand prêt.
 - whisperfile 0.10.6 est **CLI uniquement** (pas de whisper-server dans la distribution).
-  La dictée passe donc par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →
+  Dictée principale : `app/dictee.js` enregistre dans le navigateur (MediaRecorder), convertit en WAV
+  16 kHz mono (OfflineAudioContext) et POST vers `scripts/dictee-serveur.ps1`, passerelle PowerShell 5.1
+  (TcpListener sur 127.0.0.1:`PORT_DICTEE`, CORS limité à l'origine de la page). Elle sauvegarde
+  `dictees/dictee-AAAAMMJJ-HHMMSS.wav`, lance whisperfile, renvoie `{texte, fichier}` ;
+  `?fichier=` retranscrit un fichier déjà sauvegardé. PID dans `journal/dictee.pid`
+  (`scripts/arreter-dictee.bat`). Le port est transmis à la page par `app/dictee/port.txt`.
+  Le stdout de whisperfile (qui contient le texte) ne va jamais dans `journal/`.
+  Dictée de secours (si PowerShell est bloqué) par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →
   whisperfile `-otxt`) écrit `app/dictee/dictee.txt` puis `app/dictee/pret.txt` (identifiant).
   La page interroge `pret.txt` toutes les 1,5 s et insère le texte quand l'identifiant change.
 - `Demarrer.bat` : vérifie les fichiers, arrête tout llamafile déjà lancé, génère `app/prompts/_liste.txt`, lance
@@ -51,5 +58,8 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
 ## Développement
 
 - `python3 dev/serveur_factice.py 8080` imite llamafile pour tester `app/` sous Linux/macOS.
+  La passerelle se teste avec `pwsh` (PowerShell 7) et un faux whisperfile, en exportant
+  `WHISPERFILE`, `MODELE_WHISPER`, `PORT`, `PORT_DICTEE` ; Chromium avec
+  `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream` simule le micro.
 - Interface et messages en français. JS sans dépendance ni étape de build.
 - Non testé sur Windows réel à ce jour : scripts `.bat` à valider sur un poste.

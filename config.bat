@@ -29,7 +29,12 @@ set "WHISPERFILE=ressources\whisperfile.exe"
 set "MODELE_WHISPER=ressources\ggml-medium-q5_0.bin"
 set "VOCABULAIRE=Consultation de neurologie. Sclerose en plaques, IRM, EDSS, ocrelizumab, natalizumab, bandes oligoclonales, poussee, myelite."
 
-rem --- Enregistrement (ffmpeg) ---
+rem --- Dictee integree a la page (passerelle PowerShell sur 127.0.0.1) ---
+set "PORT_DICTEE=8081"
+rem Audio des dictees (dictees\*.wav) : 0 = efface en fin de session, 1 = conserve.
+set "CONSERVER_AUDIO=0"
+
+rem --- Enregistrement en secours depuis la fenetre noire (ffmpeg) ---
 set "FFMPEG=ressources\ffmpeg.exe"
 
 if exist "ressources\config_perso.bat" call "ressources\config_perso.bat"

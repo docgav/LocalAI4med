@@ -44,6 +44,7 @@ if not exist journal mkdir journal
 if not exist dictees mkdir dictees
 if not exist app\dictee mkdir app\dictee
 del /q app\dictee\*.txt 2>nul
+> "app\dictee\port.txt" echo %PORT_DICTEE%
 
 rem Liste des types de documents (fichiers de app\prompts ne commencant pas par _)
 dir /b /on "app\prompts\*.txt" | findstr /v /b /c:"_" > "app\prompts\_liste.txt"
@@ -52,6 +53,9 @@ rem Arrete un eventuel serveur reste ouvert (lance avec d'autres options).
 taskkill /f /im "%PROC%" >nul 2>&1
 timeout /t 1 /nobreak >nul
 
+echo Demarrage de la passerelle de dictee...
+call scripts\arreter-dictee.bat
+start "IA - dictee" /min powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dictee-serveur.ps1
 echo Demarrage du modele de redaction...
 start "IA - serveur" /min cmd /c scripts\serveur.bat
 
@@ -78,14 +82,15 @@ cls
 echo ============================================================
 echo  IA locale prete : http://127.0.0.1:%PORT%/
 echo  Modele : %LLM_ACTIF%
-echo  Gardez cette fenetre ouverte : elle sert de dictaphone.
-echo  Le texte dicte s'insere automatiquement dans la page.
+echo  Dictee : bouton "Dicter" dans la page (ou touche F2).
+echo  Secours si la dictee de la page ne marche pas : touche Entree ici.
+echo  Gardez cette fenetre ouverte pendant toute la session.
 echo ============================================================
 
 :menu
 echo.
 set "R="
-set /p "R=[Entree] dicter    [Q] quitter et tout effacer : "
+set /p "R=[Entree] dicter ici (secours)    [Q] quitter et tout effacer : "
 if /i "%R%"=="q" goto fin
 call scripts\dictee.bat
 goto menu
