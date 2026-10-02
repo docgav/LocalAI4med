@@ -139,7 +139,7 @@ function Ecrire-Ligne($flux, $objet) {
     $flux.Flush()
 }
 
-# Derniere valeur « progress = NN% » ecrite par whisperfile (-pp) sur sa sortie d'erreur.
+# Derniere valeur "progress = NN%" ecrite par whisperfile (-pp) sur sa sortie d'erreur.
 function Lire-Progression([string]$fichier) {
     try {
         $f = [IO.File]::Open($fichier, 'Open', 'Read', 'ReadWrite')
@@ -156,22 +156,45 @@ function Transcrire([string]$wav, $flux) {
     $sortie = "$base.sortie"   # la sortie standard contient le texte : jamais dans journal\
     $erreurs = Join-Path $journal 'whisper.log'
     Remove-Item $txt, $sortie, $erreurs -ErrorAction SilentlyContinue
-    $arguments = "-m `"$modele`" -f `"$wav`" -l fr -t $threads $optionsWhisper -otxt -of `"$base`" -np -pp --prompt `"$vocab`""
+    $dureeAudio = ((Get-Item $wav).Length - 44) / 32000
+    $options = $optionsWhisper
+    if ($env:WHISPER_CTX_ADAPTE -eq '1') {
+        # Fenetre audio reduite a la duree reelle (50 trames par seconde, 1500 = 30 s) : encodage
+        # beaucoup plus court pour les dictees breves.
+        $ac = [Math]::Min(1500, [Math]::Max(256, [int][Math]::Ceiling($dureeAudio * 50) + 64))
+        $options = "$options -ac $ac"
+    }
+    $arguments = "-m `"$modele`" -f `"$wav`" -l fr -t $threads $options -otxt -of `"$base`" -pp --prompt `"$vocab`""
+    $chrono = [Diagnostics.Stopwatch]::StartNew()
     $p = Start-Process -FilePath $whisper -ArgumentList $arguments -NoNewWindow -PassThru `
         -RedirectStandardError $erreurs -RedirectStandardOutput $sortie
     $null = $p.Handle   # necessaire en PowerShell 5.1 pour lire ExitCode ensuite
+    $t100 = $null; $tTexte = $null; $fin = 'sortie du programme'
     try {
-        $derniere = -1
+        $derniere = -1; $tailleAvant = -1
         while (-not $p.HasExited) {
-            Start-Sleep -Milliseconds 400
+            Start-Sleep -Milliseconds 300
             $prog = Lire-Progression $erreurs
             if ($prog -ne $derniere) { Ecrire-Ligne $flux @{ progression = $prog }; $derniere = $prog }
+            if ($prog -ge 100 -and $null -eq $t100) { $t100 = $chrono.Elapsed.TotalSeconds }
+            # Le texte est ecrit des la fin de la transcription ; whisperfile peut ensuite mettre
+            # longtemps a se fermer. Fichier present et stable : on n'attend pas la fermeture.
+            if (Test-Path $txt) {
+                $taille = (Get-Item $txt).Length
+                if ($null -eq $tTexte) { $tTexte = $chrono.Elapsed.TotalSeconds }
+                if ($taille -eq $tailleAvant -and ($taille -gt 0 -or $prog -ge 100)) { $fin = 'texte pret, programme arrete'; break }
+                $tailleAvant = $taille
+            }
         }
-        $p.WaitForExit()
+        if ($p.HasExited) { $p.WaitForExit() }
     } finally {
-        # Page fermee ou connexion coupee : on arrete la transcription en cours.
-        if (-not $p.HasExited) { $p.Kill() }
+        # Texte obtenu, ou page fermee / connexion coupee : on arrete whisperfile s'il tourne encore.
+        if (-not $p.HasExited) { try { $p.Kill() } catch {} }
         Remove-Item $sortie -ErrorAction SilentlyContinue
+        # Journal des durees (aucun texte) pour diagnostiquer les lenteurs.
+        $ligne = '{0:yyyy-MM-dd HH:mm:ss}  audio {1:0.0} s  100% a {2:0.0} s  texte a {3:0.0} s  total {4:0.0} s  ({5}, {6} threads, {7})' -f `
+            (Get-Date), $dureeAudio, $t100, $tTexte, $chrono.Elapsed.TotalSeconds, $fin, $threads, $options
+        Add-Content -Path (Join-Path $journal 'dictee.log') -Value $ligne -Encoding Ascii
     }
     if (-not (Test-Path $txt)) { throw "transcription echouee (code $($p.ExitCode), voir journal\whisper.log)" }
     $texte = [IO.File]::ReadAllText($txt, [Text.Encoding]::UTF8)

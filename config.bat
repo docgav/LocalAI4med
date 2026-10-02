@@ -30,6 +30,9 @@ set "MODELE_WHISPER=ressources\ggml-medium-q5_0.bin"
 rem Vitesse : -bs 1 = decodage rapide (glouton). -bs 5 = recherche en faisceau (reglage d'origine),
 rem un peu plus precise mais nettement plus lente.
 set "WHISPER_OPTIONS=-bs 1"
+rem Dictees courtes : 1 = fenetre audio adaptee a la duree (beaucoup plus rapide sous 30 s),
+rem a tester : peut un peu degrader la reconnaissance. 0 = fenetre standard de 30 s.
+set "WHISPER_CTX_ADAPTE=0"
 rem Threads CPU pour la transcription (vide = nombre de coeurs physiques du poste).
 set "WHISPER_THREADS="
 set "VOCABULAIRE=Consultation de neurologie. Sclerose en plaques, IRM, EDSS, ocrelizumab, natalizumab, bandes oligoclonales, poussee, myelite."

@@ -55,7 +55,11 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   Vitesse : whisperfile utilise par défaut beam 5 et 4 threads ; la passerelle passe `-t` (cœurs
   physiques ou `WHISPER_THREADS`) et `WHISPER_OPTIONS` (`-bs 1` = glouton). Réponse de `/transcrire`
   en NDJSON : `{fichier, duree_audio}`, `{progression}` (lu dans `-pp` sur stderr, par tranches de
-  30 s), puis `{texte, duree}` ou `{erreur}`. Connexion coupée → whisperfile tué. La page retire les
+  30 s), puis `{texte, duree}` ou `{erreur}`. Connexion coupée → whisperfile tué. « progress = 100% »
+  est émis au début de la dernière passe, donc transcription finie ; whisperfile peut ensuite mettre
+  longtemps à se fermer : dès que le `.txt` existe et ne change plus, la passerelle le lit et tue le
+  processus. Durées (sans texte) dans `journal/dictee.log`. `WHISPER_CTX_ADAPTE=1` → `-ac` ajusté
+  à la durée (50 trames/s, 1500 = 30 s). La page retire les
   silences de début/fin et estime le temps restant (facteur appris, seul nombre en localStorage).
   Dictée de secours (si PowerShell est bloqué) par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →
   whisperfile `-otxt`) écrit `app/dictee/dictee.txt` puis `app/dictee/pret.txt` (identifiant).
@@ -81,4 +85,6 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   `WHISPERFILE`, `MODELE_WHISPER`, `PORT`, `PORT_DICTEE` ; Chromium avec
   `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream` simule le micro.
 - Interface et messages en français. JS sans dépendance ni étape de build.
+- `.bat` et `.ps1` : **ASCII uniquement** (PowerShell 5.1 lit l'UTF-8 sans BOM comme ANSI ; cmd et
+  `chcp`). Les accents vont dans les fichiers lus par la page (UTF-8).
 - Non testé sur Windows réel à ce jour : scripts `.bat` à valider sur un poste.

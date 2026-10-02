@@ -125,6 +125,12 @@ Pour aller plus vite :
    ajouter plusieurs secondes.
 4. **Dicter par morceaux** plutôt qu'en un seul long enregistrement : chaque morceau est
    transcrit pendant que vous préparez le suivant.
+5. **Dictées courtes** : Whisper traite toujours une fenêtre de 30 s, même pour 6 s de parole.
+   `set "WHISPER_CTX_ADAPTE=1"` (dans `ressources\config_perso.bat`) adapte la fenêtre à la durée
+   réelle : nettement plus rapide sous 30 s, mais à tester, la reconnaissance peut être un peu moins bonne.
+
+Chaque transcription ajoute une ligne de durées dans `journal\dictee.log` (aucun texte) :
+durée de l'audio, moment où la transcription est finie, temps total. Utile pour comparer les réglages.
 
 À l'inverse, pour un peu plus de précision au prix de la vitesse : `set "WHISPER_OPTIONS=-bs 5"`
 dans `ressources\config_perso.bat`.
