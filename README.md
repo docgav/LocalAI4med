@@ -38,7 +38,7 @@ IA/
 └── dev/                  serveur factice pour tester l'interface sans modèle
 ```
 
-`*` : non versionnés (trop lourds). Les exécutables llamafile et whisperfile 0.10.6
+`*` : non versionnés (trop lourds) : voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md). Les exécutables llamafile et whisperfile 0.10.6
 doivent être renommés avec l'extension `.exe`.
 
 ## Ajouter ou modifier un type de document
