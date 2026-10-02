@@ -1,4 +1,9 @@
 @echo off
+rem Relance dans une fenetre qui reste ouverte, pour voir les messages en cas d'erreur.
+if /i "%~1"=="/garder" goto suite
+cmd /k ""%~f0" /garder"
+exit /b
+:suite
 chcp 65001 >nul
 cd /d "%~dp0"
 call config.bat
@@ -60,3 +65,4 @@ goto menu
 
 :fin
 call Arreter.bat
+exit
