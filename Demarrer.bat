@@ -72,23 +72,28 @@ if %ESSAI_P% lss 8 goto attente_passerelle
 if "%MODE%"=="complet" (set "URL=http://127.0.0.1:%PORT_DICTEE%/") else (set "URL=http://127.0.0.1:%PORT%/")
 if "%MODE%"=="secours" echo [ATTENTION] Passerelle indisponible : mode secours. Detail dans journal\passerelle.log
 echo Demarrage du modele de redaction...
+del /q journal\serveur.log 2>nul
 start "IA - serveur" /min cmd /c scripts\serveur.bat
 
 set /a ESSAIS=0
 :attente
 timeout /t 2 /nobreak >nul
 curl -s -f --max-time 3 --noproxy "*" -o nul "http://127.0.0.1:%PORT%/health" && goto ouvrir
-tasklist /fi "imagename eq %PROC%" | find /i "%PROC%" >nul
-if errorlevel 1 goto echec
+rem llamafile vraiment arrete : scripts\serveur.bat ecrit cette ligne quand il se termine.
+findstr /l /c:"[llamafile arrete" journal\serveur.log >nul 2>&1 && goto echec
 set /a ESSAIS+=1
-if %ESSAIS% lss 120 (echo   chargement... & goto attente)
+set /a SECONDES=ESSAIS*2
+if %ESSAIS% lss 300 (echo   chargement du modele... %SECONDES% s & goto attente)
 :echec
 rem Mode complet : si llamafile refuse la preconfiguration de la discussion, on relance sans elle.
 if /i not "%MODE%"=="complet" goto echec_final
 if "%SANS_PRECONFIG%"=="1" goto echec_final
 set "SANS_PRECONFIG=1"
 copy /y journal\serveur.log journal\serveur-essai1.log >nul
+taskkill /f /im "%PROC%" >nul 2>&1
+timeout /t 1 /nobreak >nul
 echo   llamafile s'est arrete : nouvel essai sans preconfiguration de la discussion...
+del /q journal\serveur.log 2>nul
 start "IA - serveur" /min cmd /c scripts\serveur.bat
 set /a ESSAIS=0
 goto attente
