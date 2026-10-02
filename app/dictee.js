@@ -6,7 +6,7 @@
 {
   const el = {
     dicter: $('dicter'), micro: $('micro'), niveau: $('niveau'), reessayer: $('reessayer'),
-    reecouter: $('reecouter'), info: $('info-dictee'),
+    reecouter: $('reecouter'), info: $('info-dictee'), fichier: $('audio-fichier'), choix: $('audio-choix'),
   };
   const DUREE_MAX = 10 * 60;  // secondes ; arrêt automatique au-delà
 
@@ -26,11 +26,13 @@
       if (!r.whisper || !r.modele) throw new Error('whisperfile ou son modèle absent de ressources\\');
       passerelle = url;
       el.dicter.disabled = false;
+      el.fichier.disabled = false;
       el.dicter.title = 'Dicter (F2)';
       etat('Dictée prête : bouton « Dicter » ou touche F2');
       listerMicros();
     } catch (e) {
       el.dicter.disabled = true;
+      el.fichier.disabled = true;
       el.dicter.title = 'Dictée intégrée indisponible' + (e.message ? ' : ' + e.message : '') + '. Secours : fenêtre noire.';
       etat('Dictée intégrée indisponible : utilisez la fenêtre noire (touche Entrée)');
     }
@@ -146,6 +148,7 @@
     if (!dernierAudio) return;
     occupe = true;
     el.dicter.disabled = true;
+    el.fichier.disabled = true;
     el.reessayer.hidden = true;
     const t0 = Date.now();
     etat('Transcription en cours…');
@@ -169,8 +172,31 @@
     } finally {
       occupe = false;
       el.dicter.disabled = !passerelle;
+      el.fichier.disabled = !passerelle;
     }
   }
+
+  // --- Fichier audio choisi par l'utilisateur (wav, mp3, m4a…) : même traitement qu'une dictée ---
+  async function transcrireFichier(f) {
+    if (occupe || !passerelle) return;
+    if (enregistreur && enregistreur.state === 'recording') return;
+    try {
+      etat(`Conversion de ${f.name}…`);
+      dernierAudio = { wav: await versWav16k(f), fichier: null };
+    } catch {
+      etat(`${f.name} : format audio non reconnu par le navigateur (essayer wav ou mp3).`);
+      return;
+    }
+    el.reecouter.hidden = false;
+    await transcrire();
+  }
+  window.transcrireFichierAudio = transcrireFichier;
+
+  el.fichier.addEventListener('click', () => el.choix.click());
+  el.choix.addEventListener('change', () => {
+    if (el.choix.files[0]) transcrireFichier(el.choix.files[0]);
+    el.choix.value = '';
+  });
 
   function basculer() {
     if (enregistreur && enregistreur.state === 'recording') arreter(); else demarrer();

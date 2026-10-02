@@ -17,6 +17,8 @@
     <button id="dicter" class="principal" disabled title="Dicter (F2)">🎙 Dicter</button>
     <meter id="niveau" min="0" max="1" value="0" hidden></meter>
     <button id="reessayer" hidden>Réessayer</button>
+    <button id="audio-fichier" disabled title="Transcrire un fichier audio (wav, mp3, m4a…)">Fichier audio…</button>
+    <input id="audio-choix" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.opus,.webm,.aac,.flac" hidden>
     <button id="reecouter" hidden title="Réécouter le dernier enregistrement">▶</button>
     <select id="micro" hidden title="Micro"></select>
     <span id="info-dictee" class="discret">Connexion à la dictée…</span>
@@ -66,7 +68,7 @@
       <button id="envoyer" class="principal">Envoyer</button>
       <button id="arreter-discussion" hidden>Arrêter</button>
       <button id="joindre" title="Joindre des images, PDF ou fichiers texte">Joindre…</button>
-      <input id="fichier" type="file" multiple accept="image/*,.pdf,.txt,.md,.csv" hidden>
+      <input id="fichier" type="file" multiple accept="image/*,.pdf,.txt,.md,.csv,audio/*" hidden>
       <span id="info-discussion" class="discret"></span>
       <button id="nouvelle" class="danger">Nouvelle discussion</button>
     </div>

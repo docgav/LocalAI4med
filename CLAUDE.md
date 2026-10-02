@@ -35,7 +35,8 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   16 kHz mono (OfflineAudioContext) et POST vers `scripts/dictee-serveur.ps1`, passerelle PowerShell 5.1
   (TcpListener sur 127.0.0.1:`PORT_DICTEE`, CORS limité à l'origine de la page). Elle sauvegarde
   `dictees/dictee-AAAAMMJJ-HHMMSS.wav`, lance whisperfile, renvoie `{texte, fichier}` ;
-  `?fichier=` retranscrit un fichier déjà sauvegardé. PID dans `journal/dictee.pid`
+  `?fichier=` retranscrit un fichier déjà sauvegardé. « Fichier audio… » (et un audio déposé dans Discussion)
+  passe par la même conversion WAV puis la même passerelle (`window.transcrireFichierAudio`). PID dans `journal/dictee.pid`
   (`scripts/arreter-dictee.bat`). Le port est transmis à la page par `app/dictee/port.txt`.
   Le stdout de whisperfile (qui contient le texte) ne va jamais dans `journal/`.
   Dictée de secours (si PowerShell est bloqué) par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →

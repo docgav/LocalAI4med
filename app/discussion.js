@@ -174,6 +174,11 @@
     for (const f of liste) {
       el.info.textContent = 'Lecture de ' + f.name + '…';
       try {
+        if (f.type.startsWith('audio/') || /\.(wav|mp3|m4a|ogg|opus|aac|flac)$/i.test(f.name)) {
+          // Un fichier audio déposé ici est transcrit, et le texte inséré dans la zone de saisie.
+          if (window.transcrireFichierAudio) window.transcrireFichierAudio(f);
+          continue;
+        }
         if (f.type.startsWith('image/')) {
           if (!serveur.vision) throw new Error('le modèle a été lancé sans module image (fichier mmproj absent, voir TELECHARGEMENTS.md).');
           enAttente.push({ type: 'image', nom: f.name, url: await imageVersJpeg(await lireFichier(f, 'url')) });
@@ -182,7 +187,7 @@
         } else if (f.type.startsWith('text/') || /\.(txt|md|csv)$/i.test(f.name)) {
           enAttente.push({ type: 'texte', nom: f.name, contenu: await lireFichier(f, 'texte') });
         } else {
-          throw new Error('format non pris en charge (images, PDF ou texte).');
+          throw new Error('format non pris en charge (images, PDF, texte ou audio).');
         }
       } catch (e) {
         alert(f.name + ' : ' + e.message);

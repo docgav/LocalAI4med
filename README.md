@@ -15,6 +15,8 @@ Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
    - Chaque enregistrement est sauvegardé dans `dictees\` (nom affiché). En cas d'échec de la
      transcription, **Réessayer** relance sur le même fichier ; **▶** réécoute le dernier enregistrement.
    - Si plusieurs micros sont branchés, une liste permet de choisir.
+   - **Fichier audio…** transcrit un enregistrement existant (wav, mp3, m4a, ogg…), par exemple celui
+     d'un dictaphone. On peut aussi le glisser dans l'onglet Discussion. Une copie est sauvegardée dans `dictees\`.
    - Les fichiers audio sont effacés à l'arrêt (`Q`), sauf si `CONSERVER_AUDIO=1` (réglages).
    - Secours : si le bouton reste grisé (PowerShell bloqué sur le poste), dicter depuis la fenêtre
      noire : `Entrée` pour commencer, `q` pour arrêter.
