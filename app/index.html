@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IA locale – rédaction</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>IA locale – rédaction</h1>
+  <span id="etat-serveur" class="etat">Serveur : …</span>
+</header>
+
+<main>
+  <section class="colonne">
+    <div class="ligne">
+      <label for="type">Document</label>
+      <select id="type"></select>
+    </div>
+    <div class="ligne entete-zone">
+      <label for="notes">Notes / dictée</label>
+      <span id="info-dictee" class="discret">Dictée : touche Entrée dans la fenêtre « dictaphone »</span>
+    </div>
+    <textarea id="notes" placeholder="Dictez depuis la fenêtre noire, ou tapez vos notes ici…"></textarea>
+    <div class="boutons">
+      <button id="rediger" class="principal" title="Ctrl+Entrée">Rédiger</button>
+      <button id="stop" hidden>Arrêter</button>
+      <button id="reinserer" title="Réinsérer la dernière dictée">Dernière dictée</button>
+      <button id="effacer" class="danger">Tout effacer</button>
+    </div>
+  </section>
+
+  <section class="colonne">
+    <div class="ligne entete-zone">
+      <label for="sortie">Document généré (modifiable)</label>
+      <span id="info-generation" class="discret"></span>
+    </div>
+    <textarea id="sortie" placeholder="Le brouillon apparaîtra ici."></textarea>
+    <div class="ligne">
+      <input id="consigne" type="text" placeholder="Modifier : « plus court », « ajoute que le patient conduit »…">
+      <button id="affiner">Modifier</button>
+    </div>
+    <div class="boutons">
+      <button id="copier" class="principal">Copier</button>
+      <button id="annuler" disabled>Version précédente</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Brouillon généré localement : relecture obligatoire, en particulier des posologies.
+  Rien n'est envoyé hors de cet ordinateur ; « Tout effacer » puis « Q » dans la fenêtre dictaphone en fin de session.
+</footer>
+<script src="app.js"></script>
+</body>
+</html>

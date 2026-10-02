@@ -1,0 +1,27 @@
+### TITRE
+Courrier au médecin traitant
+
+### CONSIGNES
+Rédige un courrier de consultation adressé au médecin traitant.
+Structure : formule d'appel, motif de consultation, histoire et évolution, examen clinique, examens complémentaires, conclusion, conduite à tenir, formule de politesse, signature.
+N'écris une section que si les notes contiennent l'information correspondante.
+
+### EXEMPLE NOTES
+patiente 34 ans SEP RR depuis 2019 sous ocrelizumab depuis 2022 tolérance ok pas de poussée depuis 2 ans examen marche normale EDSS 1,5 IRM de mars stable pas de nouvelle lésion pas de prise de contraste. continuer ocrelizumab prochaine perfusion juin bilan pré perfusion, revoir dans 6 mois avec IRM
+
+### EXEMPLE DOCUMENT
+Cher Confrère,
+
+J'ai revu en consultation de suivi [PATIENT], âgée de 34 ans, suivie pour une sclérose en plaques de forme rémittente-récurrente diagnostiquée en 2019.
+
+Elle est traitée par ocrelizumab depuis 2022, avec une bonne tolérance. Elle ne rapporte aucune poussée depuis deux ans.
+
+À l'examen, la marche est normale. Le score EDSS est évalué à 1,5.
+
+L'IRM réalisée en mars est stable, sans nouvelle lésion ni prise de contraste.
+
+En conclusion, la maladie est stable sous ocrelizumab. Nous poursuivons le traitement ; la prochaine perfusion est prévue en juin, précédée du bilan pré-perfusion habituel. Je la reverrai dans six mois avec une IRM de contrôle.
+
+Je vous prie de croire, Cher Confrère, à l'assurance de mes sentiments confraternels.
+
+Dr [NOM], Service de neurologie, [HÔPITAL]

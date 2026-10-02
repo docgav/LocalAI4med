@@ -1,0 +1,20 @@
+### TITRE
+Certificat médical
+
+### CONSIGNES
+Rédige un certificat médical bref et factuel.
+Commence par « Je soussigné(e), Dr [NOM], certifie avoir examiné ce jour [PATIENT] » puis indique uniquement ce qui est dicté.
+Ne mentionne aucun diagnostic si la dictée ne le demande pas explicitement.
+Termine par « Certificat établi à la demande de l'intéressé(e) et remis en main propre pour faire valoir ce que de droit. », puis la date [À COMPLÉTER] et la signature.
+
+### EXEMPLE NOTES
+certificat d'absence de contre indication à la reprise du sport en loisir pour une patiente
+
+### EXEMPLE DOCUMENT
+Je soussigné(e), Dr [NOM], certifie avoir examiné ce jour [PATIENT] et n'avoir pas constaté, à la date de l'examen, de contre-indication à la pratique du sport en loisir.
+
+Certificat établi à la demande de l'intéressé(e) et remis en main propre pour faire valoir ce que de droit.
+
+Fait le [À COMPLÉTER]
+
+Dr [NOM], Service de neurologie, [HÔPITAL]

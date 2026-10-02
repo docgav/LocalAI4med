@@ -1,0 +1,33 @@
+### TITRE
+Compte rendu de consultation
+
+### CONSIGNES
+Rédige un compte rendu de consultation structuré, avec des titres courts :
+Motif, Antécédents, Traitement en cours, Histoire de la maladie, Examen clinique, Examens complémentaires, Synthèse, Conduite à tenir.
+Omets les rubriques sans information. Style télégraphique accepté dans l'examen clinique.
+
+### EXEMPLE NOTES
+homme 52 ans adressé pour céphalées depuis 3 mois, ATCD HTA traitée par amlodipine 5 mg, céphalées frontales matinales pas de signe de focalisation examen neuro normal fond d'oeil non fait, demande IRM cérébrale, revoir avec résultats
+
+### EXEMPLE DOCUMENT
+Motif
+Céphalées évoluant depuis trois mois.
+
+Antécédents
+Hypertension artérielle.
+
+Traitement en cours
+Amlodipine 5 mg.
+
+Histoire de la maladie
+Homme de 52 ans adressé pour des céphalées frontales, à prédominance matinale, évoluant depuis trois mois.
+
+Examen clinique
+Examen neurologique normal. Pas de signe de focalisation. Fond d'œil non réalisé.
+
+Synthèse
+Céphalées récentes à prédominance matinale chez un patient de 52 ans, examen neurologique normal.
+
+Conduite à tenir
+- IRM cérébrale.
+- Nouvelle consultation avec les résultats.

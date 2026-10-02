@@ -1,0 +1,12 @@
+# Binaires et modeles : trop lourds, a placer a la main (voir README)
+*.exe
+*.gguf
+*.bin
+*.dll
+# Donnees de session (jamais versionnees)
+micro.txt
+dictees/*
+app/dictee/*
+journal/
+app/prompts/_liste.txt
+!.gitkeep
