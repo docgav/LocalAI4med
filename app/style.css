@@ -1,0 +1,46 @@
+:root {
+  --fond: #f4f6f8; --carte: #fff; --texte: #1d2733; --discret: #66727f;
+  --bord: #cfd6dd; --accent: #1f5f9e; --accent-texte: #fff;
+  --danger: #a33a2c; --ok: #2e7d4f; --alerte: #b26a00; --flash: #fff6cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #161b21; --carte: #1f262e; --texte: #e3e8ee; --discret: #93a0ad;
+    --bord: #3a4550; --accent: #4b8fd1; --accent-texte: #0d1217;
+    --danger: #e0806f; --ok: #6cc28f; --alerte: #e6a84a; --flash: #4a4320;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--fond); color: var(--texte);
+  font: 15px/1.45 "Segoe UI", system-ui, sans-serif;
+  display: flex; flex-direction: column; min-height: 100vh;
+}
+header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
+h1 { font-size: 18px; margin: 0; }
+.etat { font-size: 13px; color: var(--discret); }
+.etat.ok { color: var(--ok); } .etat.ko { color: var(--danger); }
+main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 16px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+.colonne {
+  background: var(--carte); border: 1px solid var(--bord); border-radius: 8px;
+  padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 70vh;
+}
+.ligne { display: flex; gap: 8px; align-items: center; }
+.entete-zone { justify-content: space-between; }
+label { font-weight: 600; }
+.discret { font-size: 13px; color: var(--discret); }
+select, input, textarea, button {
+  font: inherit; color: var(--texte); background: var(--carte);
+  border: 1px solid var(--bord); border-radius: 6px;
+}
+select { flex: 1; padding: 6px; }
+input { flex: 1; padding: 7px; }
+textarea { flex: 1; width: 100%; padding: 10px; resize: none; min-height: 200px; }
+textarea.flash { background: var(--flash); transition: background 1.5s; }
+.boutons { display: flex; gap: 8px; flex-wrap: wrap; }
+button { padding: 7px 14px; cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
+button.principal { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
+button.danger { color: var(--danger); margin-left: auto; }
+footer { padding: 10px 16px; font-size: 12px; color: var(--alerte); }

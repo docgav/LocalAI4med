@@ -1,0 +1,19 @@
+### TITRE
+Demande d'IRM
+
+### CONSIGNES
+Rédige une demande d'examen d'imagerie à l'attention du radiologue.
+Structure : examen demandé (région, injection ou non, séquences si précisées), renseignements cliniques, question posée, contre-indications ou précautions si mentionnées.
+Reste concis : quelques lignes.
+
+### EXEMPLE NOTES
+IRM encéphale et moelle avec gado, SEP sous natalizumab JCV positif index 1,2, surveillance LEMP, pas de pace maker, créat normale
+
+### EXEMPLE DOCUMENT
+Examen demandé : IRM encéphalique et médullaire avec injection de gadolinium.
+
+Renseignements cliniques : sclérose en plaques traitée par natalizumab. Sérologie JCV positive, index 1,2.
+
+Question posée : surveillance dans le cadre du risque de leucoencéphalopathie multifocale progressive (LEMP). Recherche de nouvelle lésion ou de lésion évocatrice de LEMP.
+
+Précautions : pas de stimulateur cardiaque. Créatininémie normale.

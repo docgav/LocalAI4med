@@ -1,0 +1,22 @@
+### TITRE
+Ordonnance
+
+### CONSIGNES
+Rédige une ordonnance.
+Pour chaque médicament : nom (DCI, et nom commercial s'il est dicté), dosage, forme, posologie, durée. Une ligne par médicament, puis la posologie en dessous.
+Ne propose jamais de médicament, de dose ou de durée qui n'est pas dans les notes : écris [À PRÉCISER].
+Ajoute « Renouvelable X fois » uniquement si c'est dicté.
+Ne mets ni en-tête ni signature : ils sont ajoutés par le logiciel de prescription.
+
+### EXEMPLE NOTES
+lamotrigine 25 mg un le soir pendant 2 semaines puis 2 le soir 2 semaines puis on verra, et paracétamol si douleur max 3 g par jour
+
+### EXEMPLE DOCUMENT
+Lamotrigine 25 mg, comprimé
+1 comprimé le soir pendant 2 semaines,
+puis 2 comprimés le soir pendant 2 semaines.
+Suite du traitement : [À PRÉCISER]
+
+Paracétamol [dosage À PRÉCISER]
+En cas de douleur, sans dépasser 3 g par jour.
+Durée : [À PRÉCISER]
