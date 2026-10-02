@@ -26,7 +26,9 @@ del /q app\dictee\*.txt 2>nul
 rem Liste des types de documents (fichiers de app\prompts ne commencant pas par _)
 dir /b /on "app\prompts\*.txt" | findstr /v /b /c:"_" > "app\prompts\_liste.txt"
 
-curl -s -f -o nul "http://127.0.0.1:%PORT%/health" && goto ouvrir
+rem Arrete un eventuel serveur reste ouvert (lance avec d'autres options).
+taskkill /f /im "%PROC%" >nul 2>&1
+timeout /t 1 /nobreak >nul
 
 echo Demarrage du modele de redaction...
 start "IA - serveur" /min cmd /c scripts\serveur.bat

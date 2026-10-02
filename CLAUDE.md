@@ -24,7 +24,7 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   La dictée passe donc par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →
   whisperfile `-otxt`) écrit `app/dictee/dictee.txt` puis `app/dictee/pret.txt` (identifiant).
   La page interroge `pret.txt` toutes les 1,5 s et insère le texte quand l'identifiant change.
-- `Demarrer.bat` : vérifie les fichiers, génère `app/prompts/_liste.txt`, lance
+- `Demarrer.bat` : vérifie les fichiers, arrête tout llamafile déjà lancé, génère `app/prompts/_liste.txt`, lance
   `scripts/serveur.bat` (journal `journal/serveur.log`), attend `/health` (curl.exe natif),
   ouvre le navigateur, puis boucle comme dictaphone.
 - Prompts : `app/prompts/*.txt`, sections `### TITRE`, `### CONSIGNES`, paires
