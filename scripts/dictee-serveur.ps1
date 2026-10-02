@@ -83,7 +83,7 @@ function Lire-Requete($flux) {
 
 function Repondre($flux, [int]$code, $objet, [string]$origine) {
     $json = ''
-    if ($null -ne $objet) { $json = ConvertTo-Json -InputObject $objet -Compress }
+    if ($null -ne $objet) { $json = ConvertTo-Json -InputObject $objet -Compress -Depth 5 }
     $corps = [Text.Encoding]::UTF8.GetBytes($json)
     $entete = "HTTP/1.1 $code $($statuts[$code])`r`n" +
         "Content-Type: application/json; charset=utf-8`r`n" +
@@ -124,6 +124,59 @@ function Servir-Fichier($flux, [string]$chemin) {
     $flux.Write($e, 0, $e.Length)
     if ($corps.Length -gt 0) { $flux.Write($corps, 0, $corps.Length) }
     $flux.Flush()
+}
+
+# --- Choix des modeles pendant la session ---
+$dossierRessources = Join-Path $racine 'ressources'
+$llmActif = ''
+if ($env:LLM_ACTIF) { $llmActif = Split-Path $env:LLM_ACTIF -Leaf }
+
+# Fichiers proposes : modeles de redaction (*.gguf sauf mmproj) et de transcription (ggml*.bin).
+function Lister-Modeles([string]$motif, [string]$exclure) {
+    $liste = @()
+    foreach ($f in (Get-ChildItem -Path $dossierRessources -Filter $motif -File -ErrorAction SilentlyContinue | Sort-Object Name)) {
+        if ($exclure -and $f.Name -like $exclure) { continue }
+        $liste += @{ nom = $f.Name; taille_mo = [int]($f.Length / 1MB) }
+    }
+    return ,$liste
+}
+
+function Parametre([string]$chemin, [string]$nom) {
+    if ($chemin -match "[?&]$nom=([^&]*)") { return [Uri]::UnescapeDataString($Matches[1]) }
+    return ''
+}
+
+# Arrete llamafile : processus qui ecoute sur le port du modele, sinon par nom d'executable.
+function Arreter-LLM {
+    $arretes = @()
+    try {
+        foreach ($c in (Get-NetTCPConnection -LocalPort ([int]$env:PORT) -State Listen -ErrorAction Stop)) {
+            $proc = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue
+            if ($proc) { $arretes += "$($proc.ProcessName) ($($proc.Id))"; Stop-Process -Id $proc.Id -Force }
+        }
+    } catch {}
+    $nomExe = [IO.Path]::GetFileNameWithoutExtension($env:LLAMAFILE)
+    foreach ($proc in (Get-Process -Name $nomExe -ErrorAction SilentlyContinue)) {
+        $arretes += "$($proc.ProcessName) ($($proc.Id))"; Stop-Process -Id $proc.Id -Force
+    }
+    Noter "arret du modele de redaction : $($arretes -join ', ')"
+}
+
+# Relance llamafile avec un autre modele (meme commande que Demarrer.bat, via scripts\serveur.bat).
+function Charger-LLM([string]$nom) {
+    $mmproj = ''
+    if ($env:MODELE_2B -and $nom -eq (Split-Path $env:MODELE_2B -Leaf)) { $mmproj = $env:MMPROJ_2B }
+    elseif ($env:MODELE_4B -and $nom -eq (Split-Path $env:MODELE_4B -Leaf)) { $mmproj = $env:MMPROJ_4B }
+    elseif (Test-Path (Join-Path $dossierRessources "mmproj-$nom")) { $mmproj = "ressources\mmproj-$nom" }
+    Arreter-LLM
+    Start-Sleep -Seconds 1
+    $env:LLM_ACTIF = "ressources\$nom"
+    $env:MMPROJ_ACTIF = $mmproj
+    Remove-Item (Join-Path $journal 'serveur.log') -ErrorAction SilentlyContinue
+    $cmd = $env:ComSpec
+    if (-not $cmd) { $cmd = 'cmd.exe' }
+    Start-Process -FilePath $cmd -ArgumentList '/c', 'scripts\serveur.bat' -WorkingDirectory $racine -WindowStyle Minimized
+    Noter "chargement du modele de redaction : $nom (images : $mmproj)"
 }
 
 # Reponse en flux (une ligne JSON par evenement) pour afficher l'avancement dans la page.
@@ -198,8 +251,8 @@ function Transcrire([string]$wav, $flux) {
         if (-not $p.HasExited) { try { $p.Kill() } catch {} }
         Remove-Item $sortie -ErrorAction SilentlyContinue
         # Journal des durees (aucun texte) pour diagnostiquer les lenteurs.
-        $ligne = '{0:yyyy-MM-dd HH:mm:ss}  audio {1:0.0} s  100% a {2:0.0} s  texte a {3:0.0} s  total {4:0.0} s  ({5}, {6} threads, {7})' -f `
-            (Get-Date), $dureeAudio, $t100, $tTexte, $chrono.Elapsed.TotalSeconds, $fin, $threads, $options
+        $ligne = '{0:yyyy-MM-dd HH:mm:ss}  audio {1:0.0} s  100% a {2:0.0} s  texte a {3:0.0} s  total {4:0.0} s  ({5}, {6} threads, {7}, {8})' -f `
+            (Get-Date), $dureeAudio, $t100, $tTexte, $chrono.Elapsed.TotalSeconds, $fin, $threads, $options, (Split-Path $modele -Leaf)
         Add-Content -Path (Join-Path $journal 'dictee.log') -Value $ligne -Encoding Ascii
     }
     if (-not (Test-Path $txt)) { throw "transcription echouee (code $($p.ExitCode), voir journal\whisper.log)" }
@@ -242,11 +295,29 @@ while ($true) {
             $origine = $orig
         }
         $chemin = $req.Chemin
+        $route = ($chemin -split '\?')[0]
         if ($req.Methode -eq 'OPTIONS') {
             Repondre $flux 204 $null $origine
-        } elseif ($req.Methode -eq 'GET' -and $chemin -like '/etat*') {
+        } elseif ($req.Methode -eq 'GET' -and $route -eq '/etat') {
             Repondre $flux 200 @{ ok = $true; whisper = (Test-Path $whisper); modele = (Test-Path $modele); threads = $threads } $origine
-        } elseif ($req.Methode -eq 'POST' -and $chemin -like '/transcrire*') {
+        } elseif ($req.Methode -eq 'GET' -and $route -eq '/modeles') {
+            Repondre $flux 200 @{
+                llm = (Lister-Modeles '*.gguf' 'mmproj*'); llm_actif = $llmActif
+                whisper = (Lister-Modeles 'ggml*.bin' ''); whisper_actif = (Split-Path $modele -Leaf)
+            } $origine
+        } elseif ($req.Methode -eq 'POST' -and $route -eq '/choisir-whisper') {
+            $choix = Parametre $chemin 'nom'
+            if (-not ((Lister-Modeles 'ggml*.bin' '') | Where-Object { $_.nom -eq $choix })) { throw "modele de transcription inconnu : $choix" }
+            $modele = Join-Path $dossierRessources $choix
+            Noter "modele de transcription : $choix"
+            Repondre $flux 200 @{ ok = $true; whisper_actif = $choix } $origine
+        } elseif ($req.Methode -eq 'POST' -and $route -eq '/charger-llm') {
+            $choix = Parametre $chemin 'nom'
+            if (-not ((Lister-Modeles '*.gguf' 'mmproj*') | Where-Object { $_.nom -eq $choix })) { throw "modele de redaction inconnu : $choix" }
+            Charger-LLM $choix
+            $llmActif = $choix
+            Repondre $flux 200 @{ ok = $true; llm_actif = $choix } $origine
+        } elseif ($req.Methode -eq 'POST' -and $route -eq '/transcrire') {
             if ($chemin -match 'fichier=(dictee-[0-9-]+\.wav)') {
                 # Nouvel essai sur un enregistrement deja sauvegarde
                 $nom = $Matches[1]

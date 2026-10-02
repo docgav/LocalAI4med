@@ -26,6 +26,19 @@ Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
 6. En fin de session : **Tout effacer** dans la page, puis `Q` dans la fenêtre noire
    (arrêt du serveur, effacement des dictées, vidage du presse-papier).
 
+### Changer de modèle sans redémarrer
+
+Le menu **⚙ Modèles** (en haut de la page) liste les fichiers présents dans `ressources\` :
+- **Rédaction / discussion** (fichiers `.gguf`) : choisir puis **Charger**. Le modèle actuel est
+  arrêté et le nouveau chargé (environ une minute, compteur affiché). Les images restent disponibles
+  si le fichier mmproj correspondant est présent (`mmproj-E2B.gguf`, `mmproj-E4B.gguf`, ou
+  `mmproj-<nom du modèle>` pour un autre modèle).
+- **Transcription** (fichiers `ggml*.bin`) : pris en compte dès la dictée suivante. Pratique pour
+  comparer vitesse et précision : le modèle utilisé est noté dans `journal\dictee.log`.
+
+Ces choix valent pour la session ; au démarrage suivant, les réglages de `config.bat` s'appliquent.
+Menu disponible en mode complet seulement.
+
 ### Onglet Discussion
 
 C'est **l'interface de discussion par défaut de llamafile** (celle de llama.cpp), affichée dans la page

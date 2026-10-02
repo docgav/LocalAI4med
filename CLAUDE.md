@@ -65,6 +65,13 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   Dictée de secours (si PowerShell est bloqué) par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →
   whisperfile `-otxt`) écrit `app/dictee/dictee.txt` puis `app/dictee/pret.txt` (identifiant).
   La page interroge `pret.txt` toutes les 1,5 s et insère le texte quand l'identifiant change.
+- Changement de modèles en cours de session (menu « ⚙ Modèles », `app/modeles.js`, mode complet) :
+  passerelle `GET /modeles` (liste `ressources/*.gguf` sauf `mmproj*`, et `ressources/ggml*.bin`),
+  `POST /choisir-whisper?nom=` (change `$modele`), `POST /charger-llm?nom=` (arrête llamafile par
+  le port via `Get-NetTCPConnection`, puis par nom ; relance `scripts/serveur.bat` avec
+  `LLM_ACTIF`/`MMPROJ_ACTIF` ; mmproj déduit de `MODELE_2B/4B` ou `mmproj-<nom>`). Noms validés
+  contre la liste. Routes de la passerelle comparées exactement (sinon `/modeles` attrape
+  `/modeles.js`). `scripts/arreter-llm.bat` : arrêt par nom puis par port (netstat).
 - Si llamafile s'arrête aussitôt en mode complet, `Demarrer.bat` le relance une fois sans
   `--ui-config-file` (`SANS_PRECONFIG=1`, premier journal gardé dans `journal/serveur-essai1.log`).
   `serveur.log` commence par la commande exacte et finit par « [llamafile arrete, code N] ».

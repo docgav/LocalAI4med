@@ -24,6 +24,16 @@
     <select id="micro" hidden title="Micro"></select>
     <span id="info-dictee" class="discret">Connexion à la dictée…</span>
   </div>
+  <details id="reglages" hidden>
+    <summary>⚙ Modèles</summary>
+    <div class="panneau">
+      <label for="choix-llm">Rédaction / discussion</label>
+      <div class="ligne"><select id="choix-llm"></select><button id="charger-llm" disabled>Charger</button></div>
+      <label for="choix-whisper">Transcription</label>
+      <select id="choix-whisper"></select>
+      <span id="info-modeles" class="discret"></span>
+    </div>
+  </details>
   <span id="etat-serveur" class="etat">Serveur : …</span>
 </header>
 
@@ -93,5 +103,6 @@
 <script src="dictee.js"></script>
 <script src="redaction.js"></script>
 <script src="discussion.js"></script>
+<script src="modeles.js"></script>
 </body>
 </html>

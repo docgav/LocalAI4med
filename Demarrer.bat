@@ -52,7 +52,7 @@ rem Liste des types de documents (fichiers de app\prompts ne commencant pas par 
 dir /b /on "app\prompts\*.txt" | findstr /v /b /c:"_" > "app\prompts\_liste.txt"
 
 rem Arrete un eventuel serveur reste ouvert (lance avec d'autres options).
-taskkill /f /im "%PROC%" >nul 2>&1
+call scripts\arreter-llm.bat
 timeout /t 1 /nobreak >nul
 
 rem --- Passerelle (page + dictee). Si elle ne demarre pas (PowerShell bloque) : mode secours,
@@ -90,7 +90,7 @@ if /i not "%MODE%"=="complet" goto echec_final
 if "%SANS_PRECONFIG%"=="1" goto echec_final
 set "SANS_PRECONFIG=1"
 copy /y journal\serveur.log journal\serveur-essai1.log >nul
-taskkill /f /im "%PROC%" >nul 2>&1
+call scripts\arreter-llm.bat
 timeout /t 1 /nobreak >nul
 echo   llamafile s'est arrete : nouvel essai sans preconfiguration de la discussion...
 del /q journal\serveur.log 2>nul
