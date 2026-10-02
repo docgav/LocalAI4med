@@ -14,7 +14,7 @@ votre ordinateur personnel. Aucun ne nécessite d'installation.
 | `mmproj-E4B.gguf` (facultatif : images) | quelques centaines de Mo |
 | `whisper-cpp\` (dossier, **recommandé** : transcription rapide) | ~ 10 Mo |
 | `whisperfile.exe` (si `whisper-cpp\` absent) | ~ 300 Mo |
-| `ggml-medium-q5_0.bin` | ~ 540 Mo |
+| `ggml-medium-q5_0.bin` | ~ 540 Mo (vérifiez la taille) |
 | `ffmpeg.exe` (facultatif : dictée de secours) | ~ 100 Mo |
 
 Avant tout : dans l'Explorateur, menu **Affichage** → **Afficher** → cochez
@@ -61,7 +61,7 @@ Si les deux versions sont dans `ressources\`, `Demarrer.bat` propose de choisir.
 
 ### Facultatif : lecture des images (fichiers mmproj)
 
-Pour envoyer des images à l'IA (onglet Discussion), il faut le « projecteur » du modèle.
+Pour envoyer des images à l'IA (onglets Discussion et Synthèse patient), il faut le « projecteur » du modèle.
 1. Dans le même dépôt Hugging Face que le modèle, téléchargez le fichier dont le nom commence par
    **`mmproj`** (prendre la version `F16` ou `Q8_0` si plusieurs sont proposées).
 2. Renommez-le `mmproj-E2B.gguf` (ou `mmproj-E4B.gguf` pour la version E4B) et placez-le dans `ressources\`.
@@ -105,7 +105,8 @@ Autres modèles possibles, dans le même dépôt (https://huggingface.co/ggergan
 
 Pour en utiliser un autre, placez-le dans `ressources\` et indiquez son nom dans
 `ressources\config_perso.bat`, par exemple : `set "MODELE_WHISPER=ressources\ggml-small-q5_1.bin"`.
-Gardez plusieurs fichiers pour comparer : la page affiche le temps mis après chaque dictée.
+Plus simple : gardez plusieurs fichiers dans `ressources\` et choisissez-les dans le menu **⚙ Modèles** de la page ;
+le temps mis s'affiche après chaque dictée et dans `journal\dictee.log`.
 
 ## 5. ffmpeg (facultatif : dictée de secours depuis la fenêtre noire)
 

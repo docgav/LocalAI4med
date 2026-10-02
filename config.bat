@@ -1,9 +1,10 @@
 @echo off
 rem ============================================================
-rem  Parametres de l'IA locale. Seul fichier a modifier.
+rem  Parametres techniques de l'IA locale (les reglages courants se font dans
+rem  l'onglet Personnaliser de la page). Ne modifiez pas ce fichier : il est remplace
+rem  a chaque mise a jour. Recopiez les lignes a changer dans
+rem  ressources\config_perso.bat, lu en dernier et jamais ecrase.
 rem  Tous les fichiers telecharges vont dans le dossier ressources\.
-rem  Pour garder vos reglages lors des mises a jour, recopiez les lignes
-rem  a modifier dans ressources\config_perso.bat (lu en dernier).
 rem ============================================================
 
 rem --- Modele de redaction (llamafile) ---

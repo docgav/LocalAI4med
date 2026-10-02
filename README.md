@@ -1,200 +1,228 @@
-# IA locale portable pour la rédaction médicale
+# IA locale portable pour la pratique médicale
 
-IA qui tourne entièrement sur le poste, depuis un disque USB chiffré, sans installation.
-Dictée → transcription (Whisper) → rédaction du courrier (Gemma) → relecture → copie dans le DPI.
-Rien ne sort de la machine : le serveur écoute uniquement sur `127.0.0.1`.
+Assistant d'IA qui tourne entièrement sur le poste, depuis un disque USB chiffré, sans installation :
+dictée et transcription, rédaction de courriers et d'ordonnances, discussion, synthèse de dossier patient,
+anonymisation de documents. Rien ne sort de la machine : tous les services écoutent uniquement sur
+`127.0.0.1` et la page n'utilise aucune ressource externe.
 
-## Utilisation
+**Tout document produit est un brouillon à relire**, en particulier les ordonnances (risque d'invention
+de posologie, normalement signalée par `[À PRÉCISER]`).
 
-1. Double-cliquer sur `Demarrer.bat`. Si les deux versions de Gemma sont présentes, taper `1` (E2B, rapide)
-   ou `2` (E4B, plus précis, 16 Go de RAM conseillés) ; sans réponse, E2B est choisi après 10 s.
-   Le modèle se charge, puis la page s'ouvre dans le navigateur.
-2. Dicter avec le bouton **🎙 Dicter** en haut de la page (ou la touche `F2`), puis **Arrêter** (ou `F2`).
-   Au premier usage, le navigateur demande l'autorisation d'utiliser le micro : accepter.
-   Le texte transcrit s'insère dans l'onglet affiché. On peut aussi taper les notes.
-   - Chaque enregistrement est sauvegardé dans `dictees\` (nom affiché). En cas d'échec de la
-     transcription, **Réessayer** relance sur le même fichier ; **▶** réécoute le dernier enregistrement.
-   - Si plusieurs micros sont branchés, une liste permet de choisir.
-   - **Fichier audio…** transcrit un enregistrement existant (wav, mp3, m4a, ogg…), par exemple celui
-     d'un dictaphone. On peut aussi le glisser dans l'onglet Discussion. Une copie est sauvegardée dans `dictees\`.
-   - Les fichiers audio sont effacés à l'arrêt (`Q`), sauf si `CONSERVER_AUDIO=1` (réglages).
-   - Secours : si le bouton reste grisé (PowerShell bloqué sur le poste), dicter depuis la fenêtre
-     noire : `Entrée` pour commencer, `q` pour arrêter.
-3. Choisir le type de document, cliquer sur **Rédiger** (ou `Ctrl+Entrée`).
-4. Corriger directement le texte, ou donner une consigne (« plus court »…) puis **Modifier**.
-5. **Copier**, coller dans le DPI.
-6. En fin de session : **Tout effacer** dans la page, puis `Q` dans la fenêtre noire
-   (arrêt du serveur, effacement des dictées, vidage du presse-papier).
+---
 
-### Onglet Personnaliser
+## 1. Première installation
 
-Tout se règle dans l'application ; en mode complet, c'est enregistré dans `ressources\` (fichier
-`reglages.json` et dossier `prompts\`), donc conservé lors des mises à jour.
-- **Réglages** : signature des courriers (remplace `[NOM]`, `[HÔPITAL]` et le service), créativité et
-  longueur de la rédaction, affichage de la réflexion du modèle, options de transcription, choix de
-  l'interface de discussion.
-- **Modèles de documents** : modifier un modèle existant (votre version remplace l'originale, qui
-  reste récupérable), en créer un nouveau, modifier les consignes communes (`_commun.txt`).
-- **Raccourcis** : une expression (ex. « examen neurologique normal ») est remplacée par un texte
-  complet, dans les notes dictées et au moment de la rédaction.
-- **Dictionnaire de transcription** : corrige ce que Whisper comprend mal (ex. « natalisumab » →
-  « natalizumab ») ; les formes correctes lui sont aussi données comme vocabulaire.
-- **Glossaire** : abréviations du service (ex. SEP = sclérose en plaques), transmises au modèle.
+1. Copier le contenu du ZIP du dépôt dans un dossier `IA` à la racine du disque (chiffré par BitLocker To Go).
+2. Télécharger les programmes et modèles dans `IA\ressources\` : voir **[TELECHARGEMENTS.md](TELECHARGEMENTS.md)**.
+3. Facultatif : réglages personnels dans `ressources\config_perso.bat` (voir § 6) ; le reste se règle
+   dans l'onglet **Personnaliser**.
 
-Pendant la rédaction, la page affiche la phase en cours, la **réflexion du modèle** s'il en produit
-(cadre repliable) et les **statistiques** : tokens lus, tokens rédigés, vitesse en tokens/s.
+## 2. Démarrer et arrêter
 
-### Changer de modèle sans redémarrer
+1. Double-cliquer sur **`Demarrer.bat`**.
+   - Si les deux versions de Gemma sont présentes : `1` = E2B (rapide, postes de 8 Go), `2` = E4B
+     (plus précis, 16 Go de RAM conseillés) ; sans réponse, E2B après 10 s.
+   - Le chargement du modèle est affiché (« chargement du modèle… 24 s »), puis la page s'ouvre dans une
+     **fenêtre InPrivate** d'Edge.
+2. **Gardez la fenêtre noire ouverte** pendant toute la session.
+3. En fin de session : taper **`Q`** puis Entrée dans la fenêtre noire. Cela arrête l'IA, efface les
+   fichiers temporaires (enregistrements audio, sauf réglage contraire) et vide le presse-papier.
+   Les documents conservés (§ 5) ne sont pas effacés.
 
-Le menu **⚙ Modèles** (en haut de la page) liste les fichiers présents dans `ressources\` :
-- **Rédaction / discussion** (fichiers `.gguf`) : choisir puis **Charger**. Le modèle actuel est
-  arrêté et le nouveau chargé (environ une minute, compteur affiché). Les images restent disponibles
-  si le fichier mmproj correspondant est présent (`mmproj-E2B.gguf`, `mmproj-E4B.gguf`, ou
-  `mmproj-<nom du modèle>` pour un autre modèle).
-- **Transcription** (fichiers `ggml*.bin`) : pris en compte dès la dictée suivante. Pratique pour
-  comparer vitesse et précision : le modèle utilisé est noté dans `journal\dictee.log`.
+**Mode complet ou mode secours** (indiqué dans la fenêtre noire). Le mode complet utilise une petite
+passerelle PowerShell locale. Si PowerShell est bloqué sur le poste, le **mode secours** démarre
+automatiquement : rédaction et discussion intégrée disponibles, mais pas la dictée dans la page (dictée
+de secours dans la fenêtre noire : `Entrée` pour commencer, `q` pour arrêter), ni la synthèse patient,
+l'historique, l'enregistrement des réglages et les raccourcis clavier.
 
-Ces choix valent pour la session ; au démarrage suivant, les réglages de `config.bat` s'appliquent.
-Menu disponible en mode complet seulement.
+## 3. Barre du haut (commune à tous les onglets)
 
-### Onglet Discussion
+- **🎙 Dicter** (ou `F2`) : enregistre le micro ; **Arrêter** (ou `F2`) lance la transcription. Le temps
+  restant est affiché. Le texte s'insère dans la zone de saisie de l'onglet affiché (ou est copié dans le
+  presse-papier s'il n'y en a pas : il suffit alors de coller avec `Ctrl+V`).
+  - Au premier usage de la session, le navigateur demande l'autorisation du micro : accepter.
+  - **▶** réécoute le dernier enregistrement ; **Réessayer** relance la transcription du même fichier.
+  - **Fichier audio…** transcrit un enregistrement existant (wav, mp3, m4a, ogg…).
+  - Les corrections du dictionnaire de transcription et les raccourcis (§ 4.6) sont appliqués au texte.
+- **⚙ Modèles** : changer de modèle sans redémarrer.
+  - *Rédaction / discussion* (fichiers `.gguf` de `ressources\`) : choisir puis **Charger** (environ une
+    minute ; images disponibles si le fichier mmproj correspondant est présent).
+  - *Transcription* (fichiers `ggml*.bin`) : pris en compte dès la dictée suivante.
+- En haut à droite : modèle chargé et « (images) » s'il accepte les images.
 
-Par défaut, c'est **l'interface de discussion de llamafile** (celle de llama.cpp), affichée dans la page
-et déjà réglée : message système en français adapté à la neurologie, température basse, titres des
-discussions sans appel au modèle. Toutes ses fonctions sont disponibles : historique des discussions,
-pièces jointes (PDF, images, texte), modification et régénération des réponses, réglages (roue dentée).
-- Les **images** nécessitent le fichier `mmproj` du modèle (voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md)) ;
-  en haut à droite de la page, « (images) » indique qu'il est chargé.
-- La **dictée** n'est pas insérée directement dans cette interface : elle est copiée dans le presse-papier,
-  il suffit de coller (Ctrl+V). Cliquer sur « Dicter » (F2 ne marche pas quand on est dans la discussion).
-- « Ouvrir dans un onglet séparé » l'affiche en plein écran.
-- Les préréglages sont dans `app\discussion-config.json` (message système, température…), lus au démarrage.
+## 4. Les onglets
 
-**Confidentialité** : cette interface garde l'historique des discussions dans le navigateur. La page est
-donc ouverte dans une **fenêtre InPrivate** d'Edge, dont tout le contenu est effacé à sa fermeture
-(réglage `NAVIGATEUR_PRIVE=1`). Conséquence : l'autorisation du micro est redemandée à chaque session.
+### 4.1 Rédaction
+1. Dicter ou taper les notes.
+2. Choisir le type de document (courrier, compte rendu, ordonnance, demande d'IRM, certificat…).
+3. **Rédiger** (`Ctrl+Entrée`). La page affiche la phase en cours, la **réflexion du modèle** s'il en
+   produit (cadre repliable) et les **statistiques** (tokens lus, tokens rédigés, vitesse).
+4. Corriger le texte à la main, ou donner une consigne (« plus court »…) puis **Modifier** ;
+   **Version précédente** annule la dernière modification.
+5. **Copier**, puis coller dans le DPI.
 
-**Interface en anglais** : celle de llamafile n'existe qu'en anglais (le modèle répond en français).
-Pour une discussion entièrement en français : onglet Personnaliser → Discussion → « Interface intégrée ».
+La signature (§ 4.6), le glossaire et les raccourcis sont pris en compte automatiquement.
 
-**Mode secours** : si PowerShell est bloqué sur le poste, la page est servie par llamafile et l'onglet
-Discussion revient à une discussion simplifiée intégrée (mêmes pièces jointes, dictée insérée directement).
-La fenêtre noire indique « mode complet » ou « mode secours » au démarrage.
+### 4.2 Discussion
+Par défaut, **l'interface de discussion de llamafile**, préréglée en français pour la neurologie :
+historique, pièces jointes (PDF, images, texte), modification et régénération des réponses.
+- Cette interface n'existe **qu'en anglais** (le modèle répond en français). Pour une interface en
+  français, plus simple : Personnaliser → Discussion → « Interface intégrée ».
+- La dictée y est copiée dans le presse-papier : coller avec `Ctrl+V`.
+- Son historique est effacé à la fermeture de la fenêtre InPrivate ; seule la discussion intégrée est
+  conservée dans l'Historique.
 
-Pour la dictée de secours (fenêtre noire), le micro est demandé au premier usage sur un poste
-(`scripts\micro.bat`, résultat dans `micro.txt`). Pour en changer : supprimer `micro.txt`.
+### 4.3 Synthèse patient
+Un **dossier par patient**, qui réunit des éléments et les productions du modèle.
+1. **Nouveau** : donner un libellé (de préférence non identifiant : initiales, chambre, date).
+2. Ajouter des éléments : coller du texte (**Ajouter le texte**), coller une image, **Ajouter des
+   fichiers…** (PDF, images, texte) ou glisser-déposer. Chaque élément peut être décoché pour ne pas être
+   envoyé au modèle. La page indique la place occupée dans la mémoire du modèle.
+3. **Depuis un autre logiciel** (DPI, résultats, imagerie) :
+   - sélectionner du texte puis **`Ctrl+Alt+T`** : le texte est envoyé dans le dossier ouvert ;
+   - **`Ctrl+Alt+P`** : l'outil de capture de Windows s'ouvre ; la zone sélectionnée est envoyée.
+   Une bulle confirme l'envoi (icône dans la zone de notification). Si aucun dossier n'est ouvert, les
+   éléments attendent dans la page.
+4. Outils : **Synthèse de l'histoire** (antécédents, histoire chronologique, traitements, examens,
+   problèmes actifs, points à vérifier), **questions** sur le dossier, **rédaction** d'un document du
+   type choisi à partir du dossier. Le modèle cite ses sources ([Élément 2]). Les productions sont
+   gardées dans le dossier.
 
-## Contenu du disque
+Les images ne sont utilisables qu'avec le fichier mmproj ; au plus les 4 dernières sont envoyées.
+Si le dossier est trop long pour la mémoire du modèle : décocher des éléments ou augmenter `CONTEXTE`.
 
+### 4.4 Anonymisation
+1. Saisir nom, prénom(s), date de naissance, et d'autres éléments à masquer (proches, adresse,
+   n° de dossier…), un par ligne. **Détecter avec l'IA** ajoute à cette liste les noms, lieux et
+   identifiants repérés par le modèle : à vérifier.
+2. Coller le texte ou **Ouvrir un fichier** (texte ou PDF), puis **Anonymiser**.
+   Les éléments deviennent des jetons : `[NOM]`, `[PRENOM]`, `[DATE_NAISSANCE]`, `[MASQUE_1]`,
+   `[EMAIL_1]`, `[TELEPHONE_1]`, `[NIR_1]` et, si la case est cochée, `[DATE_1]`… (les dates d'examen sont
+   gardées par défaut). Les variantes de casse et d'accents sont reconnues (LEFEVRE, Lefèvre).
+3. Le texte anonymisé commence par son identifiant `[ANON-AAAAMMJJ-HHMMSS]` ; la table de correspondance
+   est enregistrée dans `donnees\anonymisation\`.
+4. **Désanonymiser** : coller un texte contenant les jetons et l'identifiant (par exemple un texte
+   retravaillé ailleurs) ; les valeurs d'origine sont rétablies.
+
+La détection automatique n'est pas infaillible : **relire le texte anonymisé avant de le diffuser.**
+
+### 4.5 Historique
+Tous les documents produits, enregistrés automatiquement : rédactions (avec les notes et chaque
+version), transcriptions, discussions de l'interface intégrée, productions de la synthèse patient,
+textes anonymisés. Filtre par type, recherche dans le contenu, **Copier le document**, **Reprendre dans
+Rédaction**, **Supprimer**.
+
+### 4.6 Personnaliser
+Enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conservé lors des mises à jour.
+- **Réglages** : signature des courriers (remplace `[NOM]`, `[HÔPITAL]` et le service dans les modèles),
+  créativité et longueur de la rédaction, affichage de la réflexion, **conservation automatique des
+  documents**, options de transcription, choix de l'interface de discussion.
+- **Modèles de documents** : modifier un modèle (votre version remplace l'originale, qui reste
+  récupérable), en créer un, modifier les consignes communes (`_commun.txt`). Format :
+  ```
+  ### TITRE
+  Courrier d'adressage
+  ### CONSIGNES
+  Ce que le modèle doit faire, la structure attendue…
+  ### EXEMPLE NOTES
+  notes fictives
+  ### EXEMPLE DOCUMENT
+  le document attendu pour ces notes
+  ```
+  Deux ou trois paires d'exemples suffisent ; **exemples fictifs uniquement**.
+- **Raccourcis** : une expression (« examen neurologique normal ») est remplacée par son texte complet.
+- **Dictionnaire de transcription** : corrige ce que Whisper comprend mal (« natalisumab » → « natalizumab ») ;
+  les formes correctes lui sont aussi données comme vocabulaire.
+- **Glossaire** : abréviations du service (SEP = sclérose en plaques), transmises au modèle.
+
+## 5. Données enregistrées et confidentialité
+
+| Où | Quoi | Effacé ? |
+|---|---|---|
+| `donnees\archives\` | documents produits (onglet Historique) | non (suppression à la main dans l'Historique) |
+| `donnees\patients\` | dossiers de la synthèse patient | non (bouton « Supprimer le dossier ») |
+| `donnees\anonymisation\` | tables de correspondance (permettent de réidentifier) | non |
+| `dictees\` | enregistrements audio de la session | à l'arrêt, sauf `CONSERVER_AUDIO=1` |
+| `app\dictee\` | dernière transcription de la dictée de secours | à l'arrêt |
+| `journal\` | journaux techniques (durées, erreurs), **sans texte dicté** | non |
+| navigateur | rien de patient (fenêtre InPrivate) ; seuls quelques réglages d'affichage | à la fermeture |
+
+- Le dossier **`donnees\` contient des données de santé** : il doit rester sur le disque chiffré, ne
+  jamais être copié sur un poste ni une messagerie. Les tables d'anonymisation sont aussi sensibles que
+  les documents d'origine.
+- La conservation automatique se désactive dans Personnaliser → Réglages (les dossiers patients et les
+  tables d'anonymisation restent enregistrés, puisque c'est leur fonction).
+- Ce stockage doit figurer dans le dossier de validation (DSI/RSSI, registre RGPD du service).
+
+## 6. Mettre à jour
+
+Télécharger le nouveau ZIP et copier son contenu par-dessus le dossier `IA` en acceptant de remplacer.
+`ressources\` (programmes, modèles, réglages, modèles de documents personnels) et `donnees\` ne sont pas
+touchés.
+
+Réglages techniques (noms des modèles, ports, contexte…) : créer `ressources\config_perso.bat` et y
+recopier seulement les lignes `set` de `config.bat` à modifier. Exemple :
 ```
-IA/
-├── Demarrer.bat          lance le serveur, ouvre la page, sert de dictaphone
-├── Arreter.bat           arrête le serveur et efface les données de session
-├── config.bat            réglages (modèles, port, vocabulaire)
-├── ressources/           * TOUS les fichiers téléchargés, réunis ici :
-│                           llamafile.exe, whisperfile.exe, ffmpeg.exe,
-│                           gemma-4-E2B-it-Q4_K_M.gguf, ggml-medium-q5_0.bin,
-│                           (facultatifs) gemma-4-E4B-it-Q4_K_M.gguf, mmproj-E2B.gguf, mmproj-E4B.gguf
-│                           (+ config_perso.bat, facultatif)
-├── app/                  interface web (servie par llamafile) ; lib/pdfjs : lecture des PDF
-│   ├── prompts/          un fichier .txt par type de document
-│   └── dictee/           dernière transcription (temporaire, effacée à l'arrêt)
-├── scripts/              dictee-serveur.ps1 (passerelle de dictée), serveur.bat, nettoyer.bat,
-│                         dictee.bat + micro.ps1 (dictée de secours)
-├── dictees/              enregistrements audio de la session (effacés à l'arrêt)
-├── journal/              serveur.log (diagnostic)
-└── dev/                  serveur factice pour tester l'interface sans modèle
+set "CONTEXTE=16384"
+set "PORT_DICTEE=8091"
 ```
 
-`*` : non versionné (trop lourd) : voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md).
+## 7. Accélérer la transcription
 
-## Mettre à jour
+1. **Installer whisper.cpp officiel** dans `ressources\whisper-cpp\` (voir
+   [TELECHARGEMENTS.md](TELECHARGEMENTS.md)) : whisperfile 0.10.6 n'utilise pas les instructions AVX2 des
+   processeurs (sur un Xeon E-2124G : 250 s pour 20 s d'audio, dont 219 s d'encodage).
+2. Vérifier la taille du modèle `ggml-medium-q5_0.bin` : environ 540 Mo (1,4 Go = version non compressée,
+   plus lente). `ggml-small-q5_1.bin` est environ 3 fois plus rapide, mais moins précis.
+3. Personnaliser → Transcription : « Fenêtre adaptée aux dictées courtes » (plus rapide sous 30 s,
+   à tester). « Décodage rapide » est activé par défaut.
+4. Portable branché sur secteur, en mode « Performances optimales » ; disque sur un port USB 3.
 
-Téléchargez le nouveau ZIP et copiez son contenu par-dessus le dossier `IA` en acceptant de remplacer.
-Le dossier `ressources` n'est pas touché : rien à retélécharger.
+Chaque transcription ajoute une ligne de durées dans `journal\dictee.log` (sans texte) ; le modèle
+utilisé y est noté, ce qui permet de comparer.
 
-Vos réglages personnels (nom du modèle, vocabulaire…) : créez `ressources\config_perso.bat` et
-recopiez-y seulement les lignes `set` de `config.bat` que vous modifiez. Il est lu après `config.bat`
-et n'est jamais écrasé par une mise à jour.
-
-## Ajouter ou modifier un type de document
-
-Créer un fichier `.txt` (UTF-8, nom sans accent) dans `app/prompts/`. Il apparaît au prochain démarrage.
-Le numéro en début de nom fixe l'ordre. Les fichiers commençant par `_` sont ignorés
-(`_commun.txt` contient les consignes communes à tous les documents, dont la signature).
-
-```
-### TITRE
-Courrier d'adressage
-
-### CONSIGNES
-Ce que le modèle doit faire, la structure attendue…
-
-### EXEMPLE NOTES
-notes ou dictée fictives
-
-### EXEMPLE DOCUMENT
-le document attendu pour ces notes
-```
-
-On peut mettre plusieurs paires `EXEMPLE NOTES` / `EXEMPLE DOCUMENT`. Elles sont envoyées comme
-exemples de dialogue (few-shot), plus efficace que de les mettre dans les consignes.
-Deux ou trois exemples suffisent ; au-delà, la génération ralentit.
-**Les exemples doivent être fictifs ou totalement anonymisés.**
-
-## Accélérer la transcription
-
-Pendant la transcription, la page affiche le temps restant estimé. L'estimation s'affine au fil
-des dictées sur un même poste. À la fin, elle indique la durée d'audio et le temps mis.
-
-**Le plus important : installer whisper.cpp officiel** dans `ressources\whisper-cpp\` (voir
-[TELECHARGEMENTS.md](TELECHARGEMENTS.md)). whisperfile 0.10.6 n'utilise pas les instructions AVX2 des
-processeurs : sur un Xeon E-2124G, 20 s d'audio prenaient 250 s, dont 219 s d'encodage.
-
-Réglages déjà appliqués : décodage rapide (`WHISPER_OPTIONS=-bs 1`), tous les cœurs physiques
-du processeur (`WHISPER_THREADS` vide), silences de début et de fin retirés avant l'envoi.
-
-Pour aller plus vite :
-1. **Modèle Whisper plus petit** : `ggml-small-q5_1.bin` est environ 3 fois plus rapide que medium,
-   mais fait plus d'erreurs sur le vocabulaire médical (voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md)).
-2. **Ordinateur portable branché sur secteur**, en mode d'alimentation « Performances optimales » :
-   sur batterie, le processeur est bridé.
-3. **Disque USB 3** (prise bleue) : le modèle est relu à chaque dictée. Un vieux port USB 2 peut
-   ajouter plusieurs secondes.
-4. **Dicter par morceaux** plutôt qu'en un seul long enregistrement : chaque morceau est
-   transcrit pendant que vous préparez le suivant.
-5. **Dictées courtes** : Whisper traite toujours une fenêtre de 30 s, même pour 6 s de parole.
-   `set "WHISPER_CTX_ADAPTE=1"` (dans `ressources\config_perso.bat`) adapte la fenêtre à la durée
-   réelle : nettement plus rapide sous 30 s, mais à tester, la reconnaissance peut être un peu moins bonne.
-
-Chaque transcription ajoute une ligne de durées dans `journal\dictee.log` (aucun texte) :
-durée de l'audio, moment où la transcription est finie, temps total. Utile pour comparer les réglages.
-
-À l'inverse, pour un peu plus de précision au prix de la vitesse : `set "WHISPER_OPTIONS=-bs 5"`
-dans `ressources\config_perso.bat`.
-
-## Dépannage
+## 8. Dépannage
 
 | Problème | Piste |
 |---|---|
-| « Le serveur n'a pas démarré » | Lire la fin de `journal\serveur.log`, affichée à l'écran. Vérifier le nom exact du modèle dans `config.bat` et les doubles extensions cachées (`llamafile.exe.exe`). Tester `llamafile.exe --version` dans une invite de commandes. Antivirus. |
-| Page sans types de document | Lancer par `Demarrer.bat` (il génère `app\prompts\_liste.txt`). |
-| Démarrage bloqué ou « mode secours » inattendu | Lire `journal\passerelle.log`. « impossible d'écouter sur le port 8081 » : un autre logiciel utilise ce port ; mettre `set "PORT_DICTEE=8091"` (ou un autre numéro) dans `ressources\config_perso.bat`. Pas de fichier du tout : PowerShell est bloqué sur le poste. |
-| Bouton « Dicter » grisé | Passerelle de dictée non lancée : PowerShell bloqué par le poste, ou whisperfile / son modèle absent de `ressources\` (le survol du bouton indique la cause). Utiliser la dictée de secours de la fenêtre noire. |
-| La dictée de secours ne démarre pas | Nom du micro : supprimer `micro.txt`. Si PowerShell est bloqué : écrire le nom du micro à la main dans `micro.txt` (liste : `ressources\ffmpeg.exe -list_devices true -f dshow -i dummy`). |
-| Lenteur | La vitesse (tokens/s) s'affiche après chaque rédaction. Fermer les autres applications, réduire `CONTEXTE`, raccourcir les exemples. |
-| Le modèle « réfléchit » longtemps | Ajouter `--reasoning-budget 0` dans `OPTIONS_LLM` (`config.bat`). |
+| La fenêtre noire se ferme ou affiche une erreur au démarrage | Lire le message. Vérifier que le dossier `app` est complet (recopier le ZIP) et les noms des fichiers de `ressources\` (pas de `.exe.exe`, voir TELECHARGEMENTS). |
+| « Le serveur n'a pas démarré » | La fin de `journal\serveur.log` s'affiche : elle commence par la commande lancée et finit par le code d'arrêt de llamafile. Vérifier le nom du modèle, tester `ressources\llamafile.exe --version`, antivirus. |
+| « mode secours » inattendu | Lire `journal\passerelle.log`. « impossible d'écouter sur le port 8081 » : un autre logiciel utilise ce port, mettre `set "PORT_DICTEE=8091"` dans `ressources\config_perso.bat`. Fichier absent : PowerShell est bloqué sur le poste. |
+| Bouton « Dicter » grisé | Le survol du bouton indique la cause (passerelle absente, ou programme / modèle de transcription manquant dans `ressources\`). |
+| Transcription très lente | § 7. Le détail des durées est dans `journal\dictee.log` et `journal\whisper.log`. |
+| `Ctrl+Alt+T` / `Ctrl+Alt+P` sans effet | Lire `journal\capteur.log` : raccourci déjà pris par un autre logiciel (changer `TOUCHE_TEXTE` / `TOUCHE_IMAGE` dans `ressources\config_perso.bat`), ou PowerShell bloqué. Dans certains logiciels, la copie simulée ne fonctionne pas : copier (`Ctrl+C`) puis coller dans la synthèse. |
+| Page sans types de document (mode secours) | Toujours lancer par `Demarrer.bat`, qui prépare la liste. |
+| Rédaction lente | La vitesse (tokens/s) s'affiche. Fermer les autres applications, raccourcir les exemples, préférer E2B. |
+| Le modèle « réfléchit » longtemps | Ajouter `--reasoning-budget 0` dans `OPTIONS_LLM` (`ressources\config_perso.bat`). |
+| La dictée de secours ne démarre pas | Supprimer `micro.txt` pour rechoisir le micro ; si PowerShell est bloqué, y écrire le nom du micro (liste : `ressources\ffmpeg.exe -list_devices true -f dshow -i dummy`). |
 
-## Tester l'interface sans modèle (développement)
+## 9. Contenu du disque
 
 ```
-python3 dev/serveur_factice.py 8080
+IA/
+├── Demarrer.bat / Arreter.bat   démarrage (fenêtre noire) et arrêt
+├── config.bat                   réglages techniques (surchargés par ressources\config_perso.bat)
+├── ressources/      *  programmes, modèles, réglages et modèles de documents personnels (TELECHARGEMENTS.md)
+├── donnees/         *  documents conservés : archives, dossiers patients, tables d'anonymisation
+├── app/                page de l'IA (onglets), prompts/ (modèles de documents d'origine),
+│                       discussion-config.json (préréglages de la discussion), lib/pdfjs (lecture des PDF)
+├── scripts/            dictee-serveur.ps1 (passerelle), capteur.ps1 (raccourcis clavier),
+│                       serveur.bat, arrêt et nettoyage, dictée de secours (dictee.bat, micro.ps1)
+├── dictees/            audio de la session
+├── journal/            journaux techniques
+└── dev/                serveur factice pour tester la page sans modèle
 ```
+`*` : jamais dans le dépôt GitHub.
 
-## Points de vigilance
+## 10. Points de vigilance
 
-- **Validation DSI/RSSI indispensable** avant tout usage réel (exécutables non signés, ports USB).
-- Chiffrer le disque avec BitLocker To Go.
-- Pseudonymiser les dictées autant que possible ; navigateur sans extensions.
-- Le document produit est un **brouillon** : relecture obligatoire, surtout les ordonnances
-  (risque d'invention de posologie, normalement signalée par `[À PRÉCISER]`).
+- **Validation DSI/RSSI indispensable** avant tout usage réel : exécutables non signés, scripts
+  PowerShell, raccourcis clavier globaux, ports USB, **stockage de données de santé** (`donnees\`).
+- Chiffrer le disque avec BitLocker To Go ; ne jamais copier `donnees\` ailleurs.
+- Préférer des libellés de dossiers et des dictées pseudonymisés ; navigateur sans extensions.
+- Relire tout document produit, et tout texte anonymisé avant diffusion.
+
+## Développement
+
+`python3 dev/serveur_factice.py 8080` imite llamafile pour tester la page sous Linux ou macOS
+(voir [CLAUDE.md](CLAUDE.md) pour l'architecture et les tests de la passerelle).

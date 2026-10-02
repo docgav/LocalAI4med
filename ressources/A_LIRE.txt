@@ -7,5 +7,10 @@ Placez ici TOUS les fichiers telecharges (voir TELECHARGEMENTS.md) :
   gemma-4-E2B-it-Q4_K_M.gguf
   ggml-medium-q5_0.bin
 
-Facultatif : config_perso.bat (vos reglages, lu apres config.bat).
+Facultatifs : gemma-4-E4B-it-Q4_K_M.gguf, mmproj-E2B.gguf, mmproj-E4B.gguf,
+autres modeles ggml-*.bin.
+
+Crees automatiquement : reglages.json et prompts\ (onglet Personnaliser).
+Vous pouvez ajouter config_perso.bat (reglages techniques, lu apres config.bat).
+
 Les mises a jour ne touchent jamais ce dossier.
