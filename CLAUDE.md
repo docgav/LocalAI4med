@@ -18,6 +18,9 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
 
 ## Architecture
 
+- Tous les fichiers téléchargés (exécutables, modèles) sont dans `ressources/` (ignoré par git,
+  sauf `A_LIRE.txt`), pour que les mises à jour par copie du ZIP n'y touchent pas.
+  Réglages perso : `ressources/config_perso.bat`, appelé à la fin de `config.bat`.
 - `llamafile.exe --server --path app` (v0.10.6, basé sur llama-server) sert l'interface `app/`
   et l'API OpenAI `/v1/chat/completions` sur la même origine. `/health` renvoie 200 quand prêt.
 - whisperfile 0.10.6 est **CLI uniquement** (pas de whisper-server dans la distribution).

@@ -24,11 +24,11 @@ Pour changer de micro : supprimer `micro.txt`.
 IA/
 ├── Demarrer.bat          lance le serveur, ouvre la page, sert de dictaphone
 ├── Arreter.bat           arrête le serveur et efface les données de session
-├── config.bat            SEUL fichier de réglages (modèles, port, vocabulaire)
-├── llamafile.exe         *
-├── modeles/              * gemma-4-E2B-it-Q4_K_M.gguf
-├── whisper/              * whisperfile.exe, ggml-medium-q5_0.bin
-├── outils/               * ffmpeg.exe (build statique Windows)
+├── config.bat            réglages (modèles, port, vocabulaire)
+├── ressources/           * TOUS les fichiers téléchargés, réunis ici :
+│                           llamafile.exe, whisperfile.exe, ffmpeg.exe,
+│                           gemma-4-E2B-it-Q4_K_M.gguf, ggml-medium-q5_0.bin
+│                           (+ config_perso.bat, facultatif)
 ├── app/                  interface web (servie par llamafile)
 │   ├── prompts/          un fichier .txt par type de document
 │   └── dictee/           dernière transcription (temporaire, effacée à l'arrêt)
@@ -38,8 +38,16 @@ IA/
 └── dev/                  serveur factice pour tester l'interface sans modèle
 ```
 
-`*` : non versionnés (trop lourds) : voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md). Les exécutables llamafile et whisperfile 0.10.6
-doivent être renommés avec l'extension `.exe`.
+`*` : non versionné (trop lourd) : voir [TELECHARGEMENTS.md](TELECHARGEMENTS.md).
+
+## Mettre à jour
+
+Téléchargez le nouveau ZIP et copiez son contenu par-dessus le dossier `IA` en acceptant de remplacer.
+Le dossier `ressources` n'est pas touché : rien à retélécharger.
+
+Vos réglages personnels (nom du modèle, vocabulaire…) : créez `ressources\config_perso.bat` et
+recopiez-y seulement les lignes `set` de `config.bat` que vous modifiez. Il est lu après `config.bat`
+et n'est jamais écrasé par une mise à jour.
 
 ## Ajouter ou modifier un type de document
 
@@ -72,7 +80,7 @@ Deux ou trois exemples suffisent ; au-delà, la génération ralentit.
 |---|---|
 | « Le serveur n'a pas démarré » | Lire la fin de `journal\serveur.log`, affichée à l'écran. Vérifier le nom exact du modèle dans `config.bat` et les doubles extensions cachées (`llamafile.exe.exe`). Tester `llamafile.exe --version` dans une invite de commandes. Antivirus. |
 | Page sans types de document | Lancer par `Demarrer.bat` (il génère `app\prompts\_liste.txt`). |
-| La dictée ne démarre pas | Nom du micro : supprimer `micro.txt`. Si PowerShell est bloqué : écrire le nom du micro à la main dans `micro.txt` (liste : `outils\ffmpeg.exe -list_devices true -f dshow -i dummy`). |
+| La dictée ne démarre pas | Nom du micro : supprimer `micro.txt`. Si PowerShell est bloqué : écrire le nom du micro à la main dans `micro.txt` (liste : `ressources\ffmpeg.exe -list_devices true -f dshow -i dummy`). |
 | Lenteur | La vitesse (tokens/s) s'affiche après chaque rédaction. Fermer les autres applications, réduire `CONTEXTE`, raccourcir les exemples. |
 | Le modèle « réfléchit » longtemps | Ajouter `--reasoning-budget 0` dans `OPTIONS_LLM` (`config.bat`). |
 

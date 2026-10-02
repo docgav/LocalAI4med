@@ -1,4 +1,6 @@
-# Binaires et modeles : trop lourds, a placer a la main (voir README)
+# Binaires, modeles et reglages perso : dans ressources/, jamais versionnes
+ressources/*
+!ressources/A_LIRE.txt
 *.exe
 *.gguf
 *.bin

@@ -1,7 +1,7 @@
 # Detecte les micros via ffmpeg et enregistre le choix dans micro.txt (racine IA).
 $racine = Split-Path $PSScriptRoot -Parent
-$ff = Join-Path $racine "outils\ffmpeg.exe"
-if (-not (Test-Path $ff)) { Write-Host "ffmpeg.exe introuvable dans outils\"; pause; exit }
+$ff = Join-Path $racine "ressources\ffmpeg.exe"
+if (-not (Test-Path $ff)) { Write-Host "ffmpeg.exe introuvable dans ressources\"; pause; exit }
 
 $sortie = & $ff -hide_banner -list_devices true -f dshow -i dummy 2>&1 | Out-String
 $lignes = $sortie -split "`r?`n"
