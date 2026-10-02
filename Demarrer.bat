@@ -7,6 +7,7 @@ exit /b
 chcp 65001 >nul
 cd /d "%~dp0"
 call config.bat
+set "SANS_PRECONFIG="
 title IA locale - dictaphone
 
 if not exist "app\index.html" (echo [ERREUR] Dossier app incomplet : recopiez le contenu du ZIP. & pause & exit /b 1)
@@ -82,8 +83,18 @@ if errorlevel 1 goto echec
 set /a ESSAIS+=1
 if %ESSAIS% lss 120 (echo   chargement... & goto attente)
 :echec
+rem Mode complet : si llamafile refuse la preconfiguration de la discussion, on relance sans elle.
+if /i not "%MODE%"=="complet" goto echec_final
+if "%SANS_PRECONFIG%"=="1" goto echec_final
+set "SANS_PRECONFIG=1"
+copy /y journal\serveur.log journal\serveur-essai1.log >nul
+echo   llamafile s'est arrete : nouvel essai sans preconfiguration de la discussion...
+start "IA - serveur" /min cmd /c scripts\serveur.bat
+set /a ESSAIS=0
+goto attente
+:echec_final
 echo.
-echo [ERREUR] Le serveur n'a pas demarre. Fin du journal :
+echo [ERREUR] Le serveur n'a pas demarre. Fin du journal (journal\serveur.log) :
 echo ------------------------------------------------------------
 powershell -NoProfile -Command "Get-Content journal\serveur.log -Tail 25" 2>nul || type journal\serveur.log
 echo ------------------------------------------------------------
