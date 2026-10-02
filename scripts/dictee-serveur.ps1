@@ -29,13 +29,19 @@ $typesMime = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; 
 $dossier = Join-Path $racine 'dictees'
 $journal = Join-Path $racine 'journal'
 New-Item -ItemType Directory -Force $dossier, $journal | Out-Null
-Set-Content -Path (Join-Path $journal 'dictee.pid') -Value $PID -Encoding Ascii
+# Journal de fonctionnement de la passerelle (etapes et erreurs, jamais de texte dicte).
+$journalPasserelle = Join-Path $journal 'passerelle.log'
+if ((Test-Path $journalPasserelle) -and (Get-Item $journalPasserelle).Length -gt 200KB) { Remove-Item $journalPasserelle }
+function Noter([string]$message) {
+    try { Add-Content -Path $journalPasserelle -Value ('{0:HH:mm:ss}  {1}' -f (Get-Date), $message) -Encoding Ascii } catch {}
+}
+Noter "----- demarrage (PowerShell $($PSVersionTable.PSVersion), port $port, page $($env:PORT))"
 
 # Vitesse : nombre de threads (defaut : coeurs physiques) et options de decodage (-bs 1 = glouton, rapide).
 $threads = 0
 if ($env:WHISPER_THREADS) { $threads = [int]$env:WHISPER_THREADS }
 if ($threads -le 0) {
-    try { $threads = [int](Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfCores -Sum).Sum } catch { $threads = 0 }
+    try { $threads = [int](Get-CimInstance Win32_Processor -OperationTimeoutSec 5 | Measure-Object -Property NumberOfCores -Sum).Sum } catch { $threads = 0 }
     if ($threads -le 0) { $threads = [Math]::Max(1, [int]([Environment]::ProcessorCount / 2)) }
 }
 $threads = [Math]::Max(2, $threads)
@@ -202,8 +208,19 @@ function Transcrire([string]$wav, $flux) {
     return $texte.Trim()
 }
 
-$ecoute = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $port)
-$ecoute.Start()
+Noter "whisperfile : $whisper (present : $(Test-Path $whisper)) ; modele present : $(Test-Path $modele) ; $threads threads"
+try {
+    $ecoute = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $port)
+    $ecoute.Start()
+} catch {
+    Noter "ERREUR : impossible d'ecouter sur le port $port : $($_.Exception.Message)"
+    Write-Host "ERREUR : port $port indisponible. Voir journal\passerelle.log"
+    Start-Sleep -Seconds 30
+    exit 1
+}
+Noter "en ecoute sur 127.0.0.1:$port"
+# PID ecrit seulement une fois le port obtenu (Arreter.bat s'en sert pour fermer la passerelle).
+Set-Content -Path (Join-Path $journal 'dictee.pid') -Value $PID -Encoding Ascii
 Write-Host "Passerelle de dictee : http://127.0.0.1:$port, $threads threads, options : $optionsWhisper"
 Write-Host "Ne pas fermer cette fenetre."
 
@@ -218,6 +235,7 @@ while ($true) {
         $flux.ReadTimeout = 30000
         $req = Lire-Requete $flux
         if ($null -eq $req) { continue }
+        Noter "$($req.Methode) $(($req.Chemin -split '\?')[0])"
         $orig = $req.Entetes['origin']
         if ($orig) {
             if ($origines -notcontains $orig) { Repondre $flux 403 @{ erreur = 'origine refusee' } $origine; continue }
@@ -253,6 +271,7 @@ while ($true) {
             Repondre $flux 404 @{ erreur = 'adresse inconnue' } $origine
         }
     } catch {
+        Noter "erreur : $($_.Exception.Message)"
         if ($null -ne $flux) {
             try {
                 if ($enFlux) { Ecrire-Ligne $flux @{ erreur = $_.Exception.Message; fichier = $nom } }

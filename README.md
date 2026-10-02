@@ -141,6 +141,7 @@ dans `ressources\config_perso.bat`.
 |---|---|
 | « Le serveur n'a pas démarré » | Lire la fin de `journal\serveur.log`, affichée à l'écran. Vérifier le nom exact du modèle dans `config.bat` et les doubles extensions cachées (`llamafile.exe.exe`). Tester `llamafile.exe --version` dans une invite de commandes. Antivirus. |
 | Page sans types de document | Lancer par `Demarrer.bat` (il génère `app\prompts\_liste.txt`). |
+| Démarrage bloqué ou « mode secours » inattendu | Lire `journal\passerelle.log`. « impossible d'écouter sur le port 8081 » : un autre logiciel utilise ce port ; mettre `set "PORT_DICTEE=8091"` (ou un autre numéro) dans `ressources\config_perso.bat`. Pas de fichier du tout : PowerShell est bloqué sur le poste. |
 | Bouton « Dicter » grisé | Passerelle de dictée non lancée : PowerShell bloqué par le poste, ou whisperfile / son modèle absent de `ressources\` (le survol du bouton indique la cause). Utiliser la dictée de secours de la fenêtre noire. |
 | La dictée de secours ne démarre pas | Nom du micro : supprimer `micro.txt`. Si PowerShell est bloqué : écrire le nom du micro à la main dans `micro.txt` (liste : `ressources\ffmpeg.exe -list_devices true -f dshow -i dummy`). |
 | Lenteur | La vitesse (tokens/s) s'affiche après chaque rédaction. Fermer les autres applications, réduire `CONTEXTE`, raccourcir les exemples. |

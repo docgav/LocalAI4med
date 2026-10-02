@@ -63,19 +63,20 @@ set "MODE=secours"
 set /a ESSAI_P=0
 :attente_passerelle
 timeout /t 1 /nobreak >nul
-curl -s -f -o nul "http://127.0.0.1:%PORT_DICTEE%/etat" && (set "MODE=complet" & goto passerelle_ok)
+curl -s -f --max-time 3 --noproxy "*" -o nul "http://127.0.0.1:%PORT_DICTEE%/etat" && (set "MODE=complet" & goto passerelle_ok)
 set /a ESSAI_P+=1
+echo   attente de la passerelle (%ESSAI_P%/8)...
 if %ESSAI_P% lss 8 goto attente_passerelle
 :passerelle_ok
 if "%MODE%"=="complet" (set "URL=http://127.0.0.1:%PORT_DICTEE%/") else (set "URL=http://127.0.0.1:%PORT%/")
-if "%MODE%"=="secours" echo [ATTENTION] Passerelle indisponible (PowerShell bloque ?) : mode secours.
+if "%MODE%"=="secours" echo [ATTENTION] Passerelle indisponible : mode secours. Detail dans journal\passerelle.log
 echo Demarrage du modele de redaction...
 start "IA - serveur" /min cmd /c scripts\serveur.bat
 
 set /a ESSAIS=0
 :attente
 timeout /t 2 /nobreak >nul
-curl -s -f -o nul "http://127.0.0.1:%PORT%/health" && goto ouvrir
+curl -s -f --max-time 3 --noproxy "*" -o nul "http://127.0.0.1:%PORT%/health" && goto ouvrir
 tasklist /fi "imagename eq %PROC%" | find /i "%PROC%" >nul
 if errorlevel 1 goto echec
 set /a ESSAIS+=1

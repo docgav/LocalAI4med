@@ -58,7 +58,8 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
   30 s), puis `{texte, duree}` ou `{erreur}`. Connexion coupée → whisperfile tué. « progress = 100% »
   est émis au début de la dernière passe, donc transcription finie ; whisperfile peut ensuite mettre
   longtemps à se fermer : dès que le `.txt` existe et ne change plus, la passerelle le lit et tue le
-  processus. Durées (sans texte) dans `journal/dictee.log`. `WHISPER_CTX_ADAPTE=1` → `-ac` ajusté
+  processus. Durées (sans texte) dans `journal/dictee.log` ; étapes et erreurs de la passerelle dans
+  `journal/passerelle.log`. Tous les `curl` de `Demarrer.bat` ont `--max-time` et `--noproxy "*"`. `WHISPER_CTX_ADAPTE=1` → `-ac` ajusté
   à la durée (50 trames/s, 1500 = 30 s). La page retire les
   silences de début/fin et estime le temps restant (facteur appris, seul nombre en localStorage).
   Dictée de secours (si PowerShell est bloqué) par la console : `scripts/dictee.bat` (ffmpeg dshow → wav 16 kHz →
