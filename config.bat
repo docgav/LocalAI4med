@@ -25,7 +25,10 @@ rem Options supplementaires passees a llamafile (ex. --reasoning-budget 0).
 set "OPTIONS_LLM="
 
 rem --- Transcription (whisperfile) ---
+rem whisper.cpp officiel (dossier ressources\whisper-cpp\) utilise s'il est present : meme moteur que
+rem whisperfile, mais compile avec AVX2, donc 10 a 20 fois plus rapide. Sinon : whisperfile.
 set "WHISPERFILE=ressources\whisperfile.exe"
+if exist "ressources\whisper-cpp\whisper-cli.exe" set "WHISPERFILE=ressources\whisper-cpp\whisper-cli.exe"
 set "MODELE_WHISPER=ressources\ggml-medium-q5_0.bin"
 rem Vitesse : -bs 1 = decodage rapide (glouton). -bs 5 = recherche en faisceau (reglage d'origine),
 rem un peu plus precise mais nettement plus lente.

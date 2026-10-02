@@ -113,6 +113,10 @@ Deux ou trois exemples suffisent ; au-delà, la génération ralentit.
 Pendant la transcription, la page affiche le temps restant estimé. L'estimation s'affine au fil
 des dictées sur un même poste. À la fin, elle indique la durée d'audio et le temps mis.
 
+**Le plus important : installer whisper.cpp officiel** dans `ressources\whisper-cpp\` (voir
+[TELECHARGEMENTS.md](TELECHARGEMENTS.md)). whisperfile 0.10.6 n'utilise pas les instructions AVX2 des
+processeurs : sur un Xeon E-2124G, 20 s d'audio prenaient 250 s, dont 219 s d'encodage.
+
 Réglages déjà appliqués : décodage rapide (`WHISPER_OPTIONS=-bs 1`), tous les cœurs physiques
 du processeur (`WHISPER_THREADS` vide), silences de début et de fin retirés avant l'envoi.
 

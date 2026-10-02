@@ -1,7 +1,8 @@
 Placez ici TOUS les fichiers telecharges (voir TELECHARGEMENTS.md) :
 
   llamafile.exe
-  whisperfile.exe
+  whisper-cpp\  (dossier : whisper-cli.exe + .dll, transcription rapide, recommande)
+  whisperfile.exe  (utilise seulement si whisper-cpp\ est absent)
   ffmpeg.exe
   gemma-4-E2B-it-Q4_K_M.gguf
   ggml-medium-q5_0.bin

@@ -78,7 +78,14 @@ Le dépôt correspond au contenu du dossier `IA/` à la racine du disque.
 
 ## Décisions déjà prises (ne pas rouvrir sans raison)
 
-- llamafile/whisperfile : seuls outils vraiment portables (un exécutable par fonction).
+- llamafile : seul outil vraiment portable pour le LLM (calcul optimisé AVX/AVX2/AVX-512 par
+  détection à l'exécution, tinyBLAS).
+- Transcription : **whisper.cpp officiel** (`ressources/whisper-cpp/whisper-cli.exe` + DLL, ZIP
+  `whisper-bin-x64` des releases ggml-org) choisi automatiquement par `config.bat` s'il est présent ;
+  whisperfile 0.10.6 en repli. Raison : whisperfile compile `ggml-cpu` sans `-mavx*`
+  (`whisper.cpp.patches/llamafile-files/BUILD.mk`, pas de variantes), donc en SSE2 seul ;
+  mesuré sur Xeon E-2124G : encodage medium 219 s pour 30 s de fenêtre, `CPU :` vide dans le
+  journal. Mêmes options en ligne de commande (`-otxt -of -pp -bs -t -ac --prompt`).
 - Whisper plutôt que l'audio natif de Gemma 4 : meilleur en français, relecture avant rédaction.
 - MedGemma et MedASR écartés (anglophones, dépendances Python). Pas de RAG : few-shot suffit.
 

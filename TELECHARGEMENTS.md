@@ -12,7 +12,8 @@ votre ordinateur personnel. Aucun ne nécessite d'installation.
 | `mmproj-E2B.gguf` (facultatif : images) | quelques centaines de Mo |
 | `gemma-4-E4B-it-Q4_K_M.gguf` (facultatif) | ~ 5 Go |
 | `mmproj-E4B.gguf` (facultatif : images) | quelques centaines de Mo |
-| `whisperfile.exe` | ~ 300 Mo |
+| `whisper-cpp\` (dossier, **recommandé** : transcription rapide) | ~ 10 Mo |
+| `whisperfile.exe` (si `whisper-cpp\` absent) | ~ 300 Mo |
 | `ggml-medium-q5_0.bin` | ~ 540 Mo |
 | `ffmpeg.exe` (facultatif : dictée de secours) | ~ 100 Mo |
 
@@ -68,12 +69,31 @@ Pour envoyer des images à l'IA (onglet Discussion), il faut le « projecteur »
 Chaque mmproj ne fonctionne qu'avec son modèle. Sans ce fichier, tout fonctionne sauf les images
 (les PDF contenant du texte restent lisibles).
 
-## 3. Modèle de transcription : Whisper medium
+## 3. Transcription rapide : whisper.cpp officiel (recommandé)
+
+whisperfile 0.10.6 est compilé sans les instructions de calcul rapide des processeurs (AVX2) :
+la transcription est 10 à 20 fois plus lente que nécessaire. Le whisper.cpp officiel est le même
+moteur, avec les mêmes options, compilé correctement. Il est utilisé automatiquement s'il est présent.
+
+1. Ouvrez https://github.com/ggml-org/whisper.cpp/releases et prenez la dernière version.
+2. Dans **Assets**, téléchargez **`whisper-bin-x64.zip`** (pas les versions `blas`, `cublas` ni `win32`).
+3. Créez le dossier `IA\ressources\whisper-cpp\`.
+4. Ouvrez le ZIP : copiez **tout le contenu** du dossier `Release` (fichiers `.exe` **et** `.dll`)
+   dans `IA\ressources\whisper-cpp\`. Il faut au moins `whisper-cli.exe` et les `.dll` à côté.
+
+Vérification : invite de commandes dans `IA\ressources\whisper-cpp`, puis `whisper-cli.exe --help`.
+Si Windows signale un fichier `VCRUNTIME140.dll` manquant, ce poste n'a pas les bibliothèques Microsoft
+nécessaires : gardez whisperfile (il suffit de supprimer le dossier `whisper-cpp`).
+
+Après une dictée, `journal\whisper.log` doit afficher une ligne `CPU : ... AVX2 = 1 ...`.
+
+## 4. Modèle de transcription : Whisper medium
 
 Téléchargement direct :
 https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_0.bin
 
-Placez le fichier dans `IA\ressources\`.
+Placez le fichier dans `IA\ressources\`. **Vérifiez sa taille : environ 540 Mo.** Un fichier de 1,4 Go
+est la version non compressée (`ggml-medium.bin`) : elle fonctionne, mais plus lentement.
 
 Autres modèles possibles, dans le même dépôt (https://huggingface.co/ggerganov/whisper.cpp) :
 
@@ -87,7 +107,7 @@ Pour en utiliser un autre, placez-le dans `ressources\` et indiquez son nom dans
 `ressources\config_perso.bat`, par exemple : `set "MODELE_WHISPER=ressources\ggml-small-q5_1.bin"`.
 Gardez plusieurs fichiers pour comparer : la page affiche le temps mis après chaque dictée.
 
-## 4. ffmpeg (facultatif : dictée de secours depuis la fenêtre noire)
+## 5. ffmpeg (facultatif : dictée de secours depuis la fenêtre noire)
 
 La dictée de la page n'en a pas besoin. ffmpeg ne sert que si PowerShell est bloqué sur le poste.
 
