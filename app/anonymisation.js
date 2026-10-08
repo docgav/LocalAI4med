@@ -18,7 +18,7 @@
   // Variantes accentuées : « Lefevre » trouve aussi « Lefèvre », « LEFÈVRE »…
   const VARIANTES = { a: 'aàâä', e: 'eéèêë', i: 'iîï', o: 'oôö', u: 'uùûü', c: 'cç', y: 'yÿ' };
   function motifSouple(valeur) {
-    const base = valeur.normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    const base = valeur.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
     let motif = '';
     for (const c of base) {
       const min = c.toLowerCase();

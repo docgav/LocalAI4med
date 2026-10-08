@@ -98,7 +98,8 @@ Une seule page, onglets dans des blocs `{ }` (pas de collisions globales). `[hid
 `display: none !important` ; dans les `.colonne` (flex en colonne), `input`/`select` en `flex: none`.
 - `commun.js` : config, `appelerModele` (streaming, stats, réflexion), `bilanGeneration`, réglages
   (`reglages`, `reglagesPrets`, `enregistrerReglages`), `corrigerTranscription` (seule transformation de la dictée),
-  `consignesPersonnelles` (glossaire + formulations types), `appliquerSignature`, `chargerDocuments`, onglets et `vues`
+  `consignesPersonnelles` (glossaire scindé selon `autorisee` : abréviations utilisables / à écrire en
+  toutes lettres ; + formulations types), `appliquerSignature`, `chargerDocuments`, onglets et `vues`
   (zone qui reçoit la dictée ; `null` → presse-papier), `deposerTexte`, lecture de fichiers
   (`lireDocument` : images JPEG réduites, PDF par pdf.js 3.11 dans `app/lib/pdfjs`, scripts classiques,
   texte), `passerelleJson`, `archiver(type, titre, donnees, fichier)`.
@@ -107,7 +108,10 @@ Une seule page, onglets dans des blocs `{ }` (pas de collisions globales). `[hid
   `synthese.js` (dossiers, éléments activables, boîte de réception relevée toutes les 2 s, outils
   résumé / question / rédaction, au plus 4 images), `anonymisation.js` (ordre : date de naissance,
   e-mail/NIR/téléphone, expressions longues, nom/prénom seuls, dates ; motifs insensibles aux accents ;
-  identifiant `[ANON-…]` en tête), `historique.js`, `personnaliser.js`, `modeles.js`, `dictee.js`.
+  identifiant `[ANON-…]` en tête), `historique.js`, `personnaliser.js`, `modeles.js`, `dictee.js`, `apprentissage.js` (modèle à partir
+  d'exemples : une analyse JSON par document, 8 000 caractères lus, `response_format` json_schema avec
+  repli sans ; fusion en consignes ; exemple fictif ; abréviations → glossaire, termes → vocabulaire via
+  `window.personnaliserAjouter` ; documents fournis jamais enregistrés).
 - Prompts : `app/prompts/*.txt` (`### TITRE`, `### CONSIGNES`, paires `### EXEMPLE NOTES` /
   `### EXEMPLE DOCUMENT`) ; système = `_commun.txt` + consignes + glossaire + formulations types (réglage
   `raccourcis` : aucun remplacement textuel, le modèle les adapte aux notes, exceptions comprises) ; exemples en tours
@@ -141,4 +145,7 @@ Non testable sous Linux (seule la syntaxe est vérifiée).
   `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream`.
 - Syntaxe PowerShell : `[System.Management.Automation.Language.Parser]::ParseFile`.
 - Interface et messages en français ; JS sans dépendance ni étape de build.
+- Écrire les échappements Unicode des expressions régulières en `\uXXXX` (l'outil d'écriture de fichiers
+  peut les transformer en caractères invisibles) ; vérifier qu'aucun caractère U+0300 à U+036F
+  n'apparaît dans `app/*.js`.
 - Non testé sur Windows réel par Claude : s'appuyer sur les journaux envoyés par l'utilisateur.

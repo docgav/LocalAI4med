@@ -10,8 +10,10 @@
   // --- Listes éditables (raccourcis, dictionnaires) ---
   function listeEditable(conteneur, champs, elements) {
     conteneur.innerHTML = '';
+    const colonnes = champs.map((c) => (c.case ? 'auto' : c.multiligne ? '2fr' : '1fr')).join(' ') + ' auto';
     const entetes = document.createElement('div');
     entetes.className = 'rangee entetes';
+    entetes.style.gridTemplateColumns = colonnes;
     for (const c of champs) { const s = document.createElement('span'); s.textContent = c.libelle; entetes.appendChild(s); }
     entetes.appendChild(document.createElement('span'));
     conteneur.appendChild(entetes);
@@ -21,11 +23,18 @@
     const ajouterLigne = (valeurs = {}) => {
       const rangee = document.createElement('div');
       rangee.className = 'rangee';
+      rangee.style.gridTemplateColumns = colonnes;
       for (const c of champs) {
         const champ = document.createElement(c.multiligne ? 'textarea' : 'input');
         champ.dataset.cle = c.cle;
-        champ.placeholder = c.exemple || '';
-        champ.value = valeurs[c.cle] || '';
+        if (c.case) {
+          // Case à cocher (vraie par défaut)
+          champ.type = 'checkbox'; champ.title = c.libelle;
+          champ.checked = valeurs[c.cle] !== false;
+        } else {
+          champ.placeholder = c.exemple || '';
+          champ.value = valeurs[c.cle] || '';
+        }
         rangee.appendChild(champ);
       }
       const retirer = document.createElement('button');
@@ -40,11 +49,12 @@
     ajouter.addEventListener('click', () => ajouterLigne());
     conteneur.appendChild(ajouter);
     return {
+      ajouter: ajouterLigne,
       lire: () => [...lignes.querySelectorAll('.rangee')].map((r) => {
         const o = {};
-        r.querySelectorAll('[data-cle]').forEach((ch) => { o[ch.dataset.cle] = ch.value.trim(); });
+        r.querySelectorAll('[data-cle]').forEach((ch) => { o[ch.dataset.cle] = ch.type === 'checkbox' ? ch.checked : ch.value.trim(); });
         return o;
-      }).filter((o) => champs.every((c) => o[c.cle])),
+      }).filter((o) => champs.every((c) => c.case || o[c.cle])),
     };
   }
 
@@ -77,6 +87,7 @@
       glossaire: listeEditable($('liste-glossaire'), [
         { cle: 'terme', libelle: 'Abréviation / terme', exemple: 'SEP' },
         { cle: 'definition', libelle: 'Signification', exemple: 'sclérose en plaques' },
+        { cle: 'autorisee', libelle: 'Utilisable dans les documents', case: true },
       ], r.glossaire),
     };
   }
@@ -111,6 +122,20 @@
       info('perso-info', config.mode === 'complet' ? 'Enregistré dans ressources\\reglages.json.' : 'Enregistré dans ce navigateur.');
     } catch (e) { info('perso-info', 'Erreur : ' + e.message); }
   });
+
+  // Ajout depuis l'extraction de modèle : abréviations au glossaire, termes au contexte de Whisper,
+  // puis enregistrement (le reste du formulaire est enregistré tel qu'il est affiché).
+  window.personnaliserAjouter = async ({ glossaire = [], termes = [] }) => {
+    const existants = new Set(listes.glossaire.lire().map((g) => g.terme.toLowerCase()));
+    for (const g of glossaire) if (!existants.has(g.terme.toLowerCase())) listes.glossaire.ajouter(g);
+    if (termes.length) {
+      const vocab = $('r-vocabulaire').value.trim().replace(/[.\s]+$/, '');
+      const deja = new Set(vocab.toLowerCase().split(/[,.]\s*/));
+      const nouveaux = termes.filter((t) => !deja.has(t.toLowerCase()));
+      $('r-vocabulaire').value = [vocab, nouveaux.join(', ')].filter(Boolean).join('. ') + '.';
+    }
+    await enregistrerReglages(lire());
+  };
 
   $('perso-defaut').addEventListener('click', async () => {
     if (!confirm('Remplacer le formulaire par les valeurs par défaut ? (rien n\'est enregistré avant « Enregistrer »)')) return;

@@ -55,7 +55,8 @@ function analyserModele(texte, fichier) {
 // surTexte(texteComplet) est appelé à chaque morceau reçu ; surEtat(message) pour l'affichage.
 // surTexte(texte), surReflexion(raisonnement) et surStats(timings) sont appelés au fil de la réponse.
 // timings (llama-server) : prompt_n / prompt_ms (lecture), predicted_n / predicted_per_second (rédaction).
-async function appelerModele(messages, { signal, surTexte, surReflexion, surStats, surEtat, max_tokens, temperature } = {}) {
+// extra : paramètres supplémentaires de l'API (ex. response_format pour imposer un JSON).
+async function appelerModele(messages, { signal, surTexte, surReflexion, surStats, surEtat, max_tokens, temperature, extra } = {}) {
   await configPrete;
   await reglagesPrets;
   const r = reglages.redaction || {};
@@ -69,6 +70,7 @@ async function appelerModele(messages, { signal, surTexte, surReflexion, surStat
       messages, stream: true, top_p: 0.9, cache_prompt: true, timings_per_token: true,
       temperature: temperature ?? r.temperature ?? 0.3,
       max_tokens: max_tokens ?? r.longueur_max ?? 2048,
+      ...(extra || {}),
     }),
   });
   if (!rep.ok) {
@@ -169,10 +171,17 @@ function corrigerTranscription(texte) {
 // et rédige le texte type en l'adaptant.
 function consignesPersonnelles() {
   const parties = [];
+  // Glossaire : toutes les abréviations servent à comprendre les notes ; seules celles cochées
+  // « utilisable » peuvent apparaître dans le document, les autres sont écrites en toutes lettres.
   const g = (reglages.glossaire || []).filter((x) => x.terme && x.definition);
-  if (g.length) {
-    parties.push('Abréviations et termes du service (à utiliser pour comprendre les notes) :\n' +
-      g.map((x) => `- ${x.terme} = ${x.definition}`).join('\n'));
+  const permises = g.filter((x) => x.autorisee !== false), interdites = g.filter((x) => x.autorisee === false);
+  if (permises.length) {
+    parties.push('Abréviations du service que tu peux employer telles quelles dans le document :\n' +
+      permises.map((x) => `- ${x.terme} (${x.definition})`).join('\n'));
+  }
+  if (interdites.length) {
+    parties.push('Abréviations qui peuvent figurer dans les notes mais ne doivent jamais apparaître dans le document : ' +
+      'écris-les toujours en toutes lettres.\n' + interdites.map((x) => `- ${x.terme} → ${x.definition}`).join('\n'));
   }
   const f = (reglages.raccourcis || []).filter((x) => x.declencheur && x.texte);
   if (f.length) {

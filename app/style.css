@@ -145,3 +145,14 @@ nav button.flash { background: var(--flash); }
 #vue-anonymisation textarea#an-entree, #vue-anonymisation textarea#an-sortie { min-height: 220px; }
 /* Dans une colonne verticale, les champs d'une ligne ne doivent pas s'étirer en hauteur. */
 .colonne > input, .colonne > select { flex: none; }
+
+/* Extraction de modèle */
+.releve { display: grid; grid-template-columns: auto 90px 1fr auto auto; gap: 8px; align-items: center; }
+.releve label.case { flex-direction: row; gap: 4px; white-space: nowrap; }
+.releve input[type=checkbox] { flex: none; }
+.puces { display: flex; flex-wrap: wrap; gap: 6px; }
+.puces .puce { cursor: pointer; padding: 2px 10px; flex-direction: row; }
+.puces .puce input { flex: none; }
+#ap-liste { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+#ap-liste .ligne { justify-content: space-between; }
+.rangee input[type=checkbox] { flex: none; justify-self: center; align-self: center; }

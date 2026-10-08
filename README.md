@@ -132,13 +132,21 @@ Enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conse
   le document attendu pour ces notes
   ```
   Deux ou trois paires d'exemples suffisent ; **exemples fictifs uniquement**.
+- **Créer un modèle à partir d'exemples** : fournir plusieurs documents du même type (5 à 10, PDF ou
+  texte, par exemple des comptes rendus d'hospitalisation). Le modèle analyse chacun, en déduit un modèle
+  général (rubriques, style, formules d'usage), peut créer un exemple fictif, et relève les abréviations
+  (→ glossaire) et les termes spécialisés (→ vocabulaire de la transcription). Relire le modèle proposé
+  (aucune donnée de patient ne doit y rester), puis l'enregistrer. Les documents fournis ne sont ni
+  enregistrés ni archivés. Compter environ une minute par document.
 - **Formulations types** : textes types transmis au modèle (ex. « examen neurologique normal » → examen
   complet). Vos notes restent telles quelles ; quand elles y font référence, même en abrégé ou avec des
   exceptions (« ROT vifs mais reste de l'examen normal »), le modèle rédige le texte type en l'adaptant.
   À vérifier à la relecture : un petit modèle peut oublier une exception. Gardez les textes courts.
 - **Dictionnaire de transcription** : corrige ce que Whisper comprend mal (« natalisumab » → « natalizumab ») ;
   les formes correctes lui sont aussi données comme vocabulaire.
-- **Glossaire** : abréviations du service (SEP = sclérose en plaques), transmises au modèle.
+- **Glossaire** : abréviations du service, transmises au modèle pour comprendre les notes. Case
+  **« utilisable »** : cochée, le modèle peut écrire l'abréviation dans le document (IRM) ; décochée, il
+  l'écrit toujours en toutes lettres (SEP → sclérose en plaques).
 
 ## 5. Données enregistrées et confidentialité
 

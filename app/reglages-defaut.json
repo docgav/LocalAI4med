@@ -26,19 +26,67 @@
     }
   ],
   "dictionnaire_transcription": [
-    { "entendu": "sclérose en plaque", "ecrit": "sclérose en plaques" },
-    { "entendu": "ocrélisumab", "ecrit": "ocrélizumab" },
-    { "entendu": "natalisumab", "ecrit": "natalizumab" },
-    { "entendu": "bande oligoclonale", "ecrit": "bandes oligoclonales" },
-    { "entendu": "E.D.S.S.", "ecrit": "EDSS" }
+    {
+      "entendu": "sclérose en plaque",
+      "ecrit": "sclérose en plaques"
+    },
+    {
+      "entendu": "ocrélisumab",
+      "ecrit": "ocrélizumab"
+    },
+    {
+      "entendu": "natalisumab",
+      "ecrit": "natalizumab"
+    },
+    {
+      "entendu": "bande oligoclonale",
+      "ecrit": "bandes oligoclonales"
+    },
+    {
+      "entendu": "E.D.S.S.",
+      "ecrit": "EDSS"
+    }
   ],
   "glossaire": [
-    { "terme": "SEP", "definition": "sclérose en plaques" },
-    { "terme": "RR", "definition": "rémittente-récurrente" },
-    { "terme": "EDSS", "definition": "Expanded Disability Status Scale (score de handicap)" },
-    { "terme": "BOC", "definition": "bandes oligoclonales" },
-    { "terme": "LEMP", "definition": "leucoencéphalopathie multifocale progressive" },
-    { "terme": "PL", "definition": "ponction lombaire" },
-    { "terme": "ROT", "definition": "réflexes ostéotendineux" }
+    {
+      "terme": "IRM",
+      "definition": "imagerie par résonance magnétique",
+      "autorisee": true
+    },
+    {
+      "terme": "SEP",
+      "definition": "sclérose en plaques",
+      "autorisee": false
+    },
+    {
+      "terme": "RR",
+      "definition": "rémittente-récurrente",
+      "autorisee": false
+    },
+    {
+      "terme": "EDSS",
+      "definition": "Expanded Disability Status Scale (score de handicap)",
+      "autorisee": true
+    },
+    {
+      "terme": "BOC",
+      "definition": "bandes oligoclonales",
+      "autorisee": false
+    },
+    {
+      "terme": "LEMP",
+      "definition": "leucoencéphalopathie multifocale progressive",
+      "autorisee": false
+    },
+    {
+      "terme": "PL",
+      "definition": "ponction lombaire",
+      "autorisee": false
+    },
+    {
+      "terme": "ROT",
+      "definition": "réflexes ostéotendineux",
+      "autorisee": false
+    }
   ]
 }

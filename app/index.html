@@ -281,6 +281,47 @@
     </details>
 
     <details>
+      <summary>Créer un modèle à partir d'exemples</summary>
+      <div class="formulaire">
+        <span class="discret">Fournissez plusieurs documents du même type (5 à 10 idéalement, PDF ou texte). Le modèle en déduit
+          un modèle général (rubriques, style, formules d'usage), peut créer un exemple fictif, et relève les abréviations
+          et les termes spécialisés. Les documents fournis ne sont ni enregistrés ni archivés. Comptez environ une minute par
+          document sur un poste sans carte graphique.</span>
+        <label>Type de document <input id="ap-titre" placeholder="ex. Compte rendu d'hospitalisation"></label>
+        <div id="ap-zone" class="zone-depot">
+          <textarea id="ap-coller" rows="3" placeholder="Collez un document ici, ou glissez des fichiers PDF / texte."></textarea>
+          <div class="boutons">
+            <button id="ap-ajouter">Ajouter le texte collé</button>
+            <button id="ap-fichiers">Ajouter des fichiers…</button>
+            <input id="ap-choix" type="file" multiple accept=".pdf,.txt,.md" hidden>
+          </div>
+        </div>
+        <div id="ap-liste"></div>
+        <label class="case"><input id="ap-exemple" type="checkbox" checked> Créer aussi un exemple fictif (aide beaucoup le modèle à suivre le format)</label>
+        <div class="boutons">
+          <button id="ap-analyser" class="principal" disabled>Analyser les exemples</button>
+          <button id="ap-arreter" hidden>Arrêter</button>
+          <span id="ap-info" class="discret"></span>
+        </div>
+        <div id="ap-resultats" class="formulaire" hidden>
+          <h3>Modèle proposé (modifiable)</h3>
+          <span class="avertissement">Relisez-le : aucune donnée de patient ne doit y rester.</span>
+          <label>Nom du fichier <input id="ap-fichier"></label>
+          <textarea id="ap-modele" rows="18" spellcheck="false"></textarea>
+          <div class="boutons"><button id="ap-enregistrer" class="principal">Enregistrer ce modèle de document</button></div>
+          <h3>Abréviations relevées</h3>
+          <div id="ap-abreviations" class="liste-editable"></div>
+          <h3>Termes spécialisés (vocabulaire donné à la transcription)</h3>
+          <div id="ap-termes" class="puces"></div>
+          <div class="boutons">
+            <button id="ap-ajouter-reglages">Ajouter la sélection au glossaire et au vocabulaire</button>
+            <span id="ap-info-resultats" class="discret"></span>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details>
       <summary>Formulations types</summary>
       <div class="formulaire">
         <span class="discret">Textes types transmis au modèle (rédaction et synthèse patient). Les notes restent telles quelles :
@@ -302,7 +343,9 @@
     <details>
       <summary>Glossaire de rédaction</summary>
       <div class="formulaire">
-        <span class="discret">Abréviations et termes du service, transmis au modèle pour comprendre les notes (ex. SEP = sclérose en plaques).</span>
+        <span class="discret">Abréviations du service, transmises au modèle pour comprendre les notes. Case « utilisable » cochée :
+          le modèle peut employer l'abréviation dans le document (ex. IRM) ; décochée : il l'écrit toujours en toutes lettres
+          (ex. SEP → sclérose en plaques).</span>
         <div id="liste-glossaire" class="liste-editable"></div>
       </div>
     </details>
@@ -328,5 +371,6 @@
 <script src="synthese.js"></script>
 <script src="anonymisation.js"></script>
 <script src="historique.js"></script>
+<script src="apprentissage.js"></script>
 </body>
 </html>

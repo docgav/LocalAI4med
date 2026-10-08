@@ -63,8 +63,22 @@ class Gestionnaire(SimpleHTTPRequestHandler):
         if isinstance(dernier, list):
             images = sum(1 for p in dernier if p.get("type") == "image_url")
             dernier = " ".join(p.get("text", "") for p in dernier if p.get("type") == "text")
-        reponse = f"[Réponse factice : {len(messages)} messages, système de {len(messages[0]['content'])} " \
-                  f"caractères, {images} image(s)]\n\n**Reçu :** {dernier[:300]}"
+        schema = ((corps.get("response_format") or {}).get("json_schema") or {}).get("schema") or {}
+        if "rubriques" in schema.get("properties", {}):
+            # Analyse factice d'un courrier (module d'extraction de modèle)
+            reponse = json.dumps({"rubriques": [{"titre": "Motif", "contenu": "raison de l'hospitalisation"},
+                                                {"titre": "Histoire de la maladie", "contenu": "chronologie"},
+                                                {"titre": "Conclusion", "contenu": "diagnostic et suites"}],
+                                  "style": "phrases courtes, passé composé", "formules": ["Cher confrère,"],
+                                  "abreviations": [{"terme": "IRM", "definition": "imagerie par résonance magnétique"},
+                                                   {"terme": "PL", "definition": "ponction lombaire"},
+                                                   {"terme": "TDM", "definition": "tomodensitométrie"}],
+                                  "termes": ["ocrélizumab", "bandes oligoclonales"]}, ensure_ascii=False)
+        elif "notes" in schema.get("properties", {}):
+            reponse = json.dumps({"notes": "patient fictif 40 ans, poussée", "document": "Cher confrère, ... Dr [NOM]"}, ensure_ascii=False)
+        else:
+            reponse = f"[Réponse factice : {len(messages)} messages, système de {len(messages[0]['content'])} " \
+                      f"caractères, {images} image(s)]\n\n**Reçu :** {dernier[:300]}"
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.end_headers()
