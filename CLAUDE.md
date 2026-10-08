@@ -18,7 +18,8 @@ L'utilisateur teste sur Windows ; ici, on ne peut tester que sous Linux (voir «
   stockage du navigateur (localStorage limité à : onglet, type de document, micro, facteur de vitesse de
   transcription, réglages en mode secours), jamais dans `journal/` (le stdout de whisper, qui contient le
   texte, n'y va pas). Temporaires effacés par `scripts/nettoyer.bat` (appelé par `Arreter.bat`) :
-  `dictees/*.wav` (sauf `CONSERVER_AUDIO=1`), `app/dictee/*`, presse-papier. `donnees/` n'est jamais effacé.
+  `dictees/*`, `app/dictee/*`, presse-papier ; `donnees/audio/*.wav` seulement si `general.supprimer_audio`.
+  Sinon `donnees/` n'est effacé que par la purge `general.conservation_mois` (passerelle, au démarrage).
 - Exemples des prompts : fictifs uniquement.
 - `.bat` et `.ps1` : **ASCII uniquement** (PowerShell 5.1 lit l'UTF-8 sans BOM comme ANSI) et **CRLF**
   (stockés tels quels, `.gitattributes` : `-text`). Accents seulement dans les fichiers lus par la page.
@@ -73,7 +74,9 @@ obtenu). Noms de fichiers toujours validés par motif avant de construire un che
 - `donnees/` : `/archiver` (POST ; `?type=` nouvelle archive `AAAA-MM-JJ/HHmmss-fff-type.json`,
   `?fichier=` mise à jour), `/archives?type=&texte=` (300 plus récentes), `/archive?fichier=`,
   `/archive-supprimer` ; `/patients`, `/patient?id=` (GET/POST, 100 Mo max), `/patient-supprimer` ;
-  `/correspondances`, `/correspondance?id=ANON-AAAAMMJJ-HHMMSS`.
+  `/correspondances`, `/correspondance?id=ANON-AAAAMMJJ-HHMMSS` ; `/audio?fichier=dictee-*.wav`
+  (`donnees/audio`, réécoute dans l'Historique). Au démarrage, `Purger-Anciens` supprime archives et WAV
+  plus vieux que `general.conservation_mois` (0 = jamais).
 - `/boite` : POST par le capteur (gardé en mémoire, 50 max), GET par la page (vide la boîte).
 
 ## Transcription
@@ -94,7 +97,10 @@ obtenu). Noms de fichiers toujours validés par motif avant de construire un che
 
 ## Page (`app/`)
 
-Une seule page, onglets dans des blocs `{ }` (pas de collisions globales). `[hidden]` forcé en
+Une seule page, onglets dans des blocs `{ }` (pas de collisions globales). Les réglages (vue
+`personnaliser`) s'ouvrent par le bouton `⚙ Réglages` (pas un onglet, `vuePrecedente` pour le retour) ;
+`reglagesGeneraux()` / `appliquerAffichage()` : bloc `general` (thème `data-theme`, zoom, touche de dictée,
+insertion, copie auto, confirmation, onglet de démarrage). `[hidden]` forcé en
 `display: none !important` ; dans les `.colonne` (flex en colonne), `input`/`select` en `flex: none`.
 - `commun.js` : config, `appelerModele` (streaming, stats, réflexion), `bilanGeneration`, réglages
   (`reglages`, `reglagesPrets`, `enregistrerReglages`), `corrigerTranscription` (seule transformation de la dictée),

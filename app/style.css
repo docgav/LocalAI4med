@@ -3,13 +3,21 @@
   --bord: #cfd6dd; --accent: #1f5f9e; --accent-texte: #fff;
   --danger: #a33a2c; --ok: #2e7d4f; --alerte: #b26a00; --flash: #fff6cc;
 }
+/* Thème sombre : automatique (réglage Windows) sauf si « clair » est choisi, ou forcé par « sombre ». */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="clair"]) {
     --fond: #161b21; --carte: #1f262e; --texte: #e3e8ee; --discret: #93a0ad;
     --bord: #3a4550; --accent: #4b8fd1; --accent-texte: #0d1217;
     --danger: #e0806f; --ok: #6cc28f; --alerte: #e6a84a; --flash: #4a4320;
   }
 }
+:root[data-theme="sombre"] {
+  --fond: #161b21; --carte: #1f262e; --texte: #e3e8ee; --discret: #93a0ad;
+  --bord: #3a4550; --accent: #4b8fd1; --accent-texte: #0d1217;
+  --danger: #e0806f; --ok: #6cc28f; --alerte: #e6a84a; --flash: #4a4320;
+}
+:root[data-theme="clair"] { color-scheme: light; }
+:root[data-theme="sombre"] { color-scheme: dark; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body {
@@ -156,3 +164,8 @@ nav button.flash { background: var(--flash); }
 #ap-liste { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 #ap-liste .ligne { justify-content: space-between; }
 .rangee input[type=checkbox] { flex: none; justify-self: center; align-self: center; }
+
+/* Bouton Réglages (en dehors des onglets d'outils) */
+#bouton-reglages.actif { background: var(--carte); border-color: var(--accent); font-weight: 600; }
+.personnaliser h2 { font-size: 18px; margin: 0; }
+.formulaire select { flex: none; max-width: 420px; }

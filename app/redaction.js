@@ -123,6 +123,7 @@
     const document = await generer(messages);
     if (document !== null) {
       conversation = messages;
+      if (reglagesGeneraux().copie_auto) copierTexte(document, el.copier);
       // Archivage (donnees/archives) : une archive par rédaction, mise à jour à chaque modification.
       archive = { modele: modele.titre, notes, versions: [document] };
       archive.fichier = await archiver('redaction', `${modele.titre} – ${notes.slice(0, 60)}`, archive);
@@ -142,6 +143,7 @@
     const document = await generer(messages);
     if (document !== null) {
       conversation = messages; el.consigne.value = '';
+      if (reglagesGeneraux().copie_auto) copierTexte(document, el.copier);
       if (archive) {
         archive.versions.push(`[Modification : ${consigne}]\n${document}`);
         archive.fichier = await archiver('redaction', `${archive.modele} – ${archive.notes.slice(0, 60)}`, archive, archive.fichier) || archive.fichier;
@@ -168,7 +170,7 @@
   el.reinserer.addEventListener('click', () => insererDerniereDictee().catch(() => alert('Aucune dictée disponible.')));
 
   el.effacer.addEventListener('click', () => {
-    if (!confirm('Effacer les notes et le document ?')) return;
+    if (reglagesGeneraux().confirmer_effacement !== false && !confirm('Effacer les notes et le document ?')) return;
     if (controleur) controleur.abort();
     el.notes.value = ''; el.sortie.value = ''; el.consigne.value = '';
     conversation = null; versionPrecedente = null; el.annuler.disabled = true;

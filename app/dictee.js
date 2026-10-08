@@ -1,5 +1,5 @@
 // Dictée intégrée : enregistre le micro dans le navigateur, convertit en WAV 16 kHz mono et l'envoie
-// à la passerelle locale (scripts/dictee-serveur.ps1), qui sauvegarde le fichier dans dictees\
+// à la passerelle locale (scripts/dictee-serveur.ps1), qui sauvegarde le fichier dans donnees\audio\
 // et le transcrit avec whisperfile. Le texte est inséré dans l'onglet affiché.
 'use strict';
 
@@ -16,6 +16,9 @@
   let occupe = false;
 
   function etat(texte) { el.info.textContent = texte; }
+  // Touche de dictée choisie dans Réglages > Général (F2 par défaut).
+  const touche = () => reglagesGeneraux().touche_dictee || 'F2';
+  document.addEventListener('reglages-modifies', () => { el.dicter.title = `Dicter (${touche()})`; });
 
   // --- Connexion à la passerelle (port écrit par Demarrer.bat dans dictee/config.json) ---
   async function connecter() {
@@ -27,8 +30,9 @@
       passerelle = url;
       el.dicter.disabled = false;
       el.fichier.disabled = false;
-      el.dicter.title = 'Dicter (F2)';
-      etat('Dictée prête : bouton « Dicter » ou touche F2');
+      await reglagesPrets;
+      el.dicter.title = `Dicter (${touche()})`;
+      etat(`Dictée prête : bouton « Dicter » ou touche ${touche()}`);
       listerMicros();
     } catch (e) {
       el.dicter.disabled = true;
@@ -77,7 +81,7 @@
       el.dicter.textContent = `■ Arrêter ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
       if (s >= DUREE_MAX) arreter();
     }, 250);
-    etat('Enregistrement… cliquez sur « Arrêter » ou F2 pour terminer');
+    etat(`Enregistrement… cliquez sur « Arrêter » ou ${touche()} pour terminer`);
   }
 
   function afficherNiveau() {
@@ -249,10 +253,10 @@
       const resultat = await deposerTexte(fin.texte);
       apprendreFacteur(fin.duree_audio, fin.duree);
       archiver('transcription', fin.texte.slice(0, 80), { texte: fin.texte, audio: fin.fichier, duree_audio: fin.duree_audio });
-      etat(`Dictée ${resultat} – ${formaterDuree(fin.duree_audio)} d'audio transcrites en ${formaterDuree(fin.duree)} – audio : dictees\\${fin.fichier}`);
+      etat(`Dictée ${resultat} – ${formaterDuree(fin.duree_audio)} d'audio transcrites en ${formaterDuree(fin.duree)} – audio : donnees\\audio\\${fin.fichier}`);
     } catch (e) {
       clearInterval(minuteur);
-      etat('Transcription impossible : ' + e.message + (dernierAudio.fichier ? ` (audio conservé : dictees\\${dernierAudio.fichier})` : ''));
+      etat('Transcription impossible : ' + e.message + (dernierAudio.fichier ? ` (audio conservé : donnees\\audio\\${dernierAudio.fichier})` : ''));
       el.reessayer.hidden = false;
     } finally {
       occupe = false;
@@ -296,7 +300,7 @@
     lecteur.play();
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'F2' && !el.dicter.disabled) { e.preventDefault(); basculer(); }
+    if (e.key === touche() && !el.dicter.disabled) { e.preventDefault(); basculer(); }
   });
 
   connecter();

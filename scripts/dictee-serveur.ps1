@@ -1,6 +1,6 @@
 # Passerelle locale :
 #  - sert la page de l'IA (dossier app\) ;
-#  - recoit l'audio enregistre par la page (WAV 16 kHz mono), l'enregistre dans dictees\,
+#  - recoit l'audio enregistre par la page (WAV 16 kHz mono), l'enregistre dans donnees\audio\,
 #    le transcrit avec whisperfile et renvoie le texte.
 # Ecoute uniquement sur 127.0.0.1 et n'accepte que les requetes venant de la page de l'IA.
 # Lance par Demarrer.bat, qui fournit la configuration par variables d'environnement.
@@ -26,7 +26,8 @@ $dossierApp = [IO.Path]::GetFullPath((Join-Path $racine 'app'))
 $typesMime = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8';
     '.css' = 'text/css; charset=utf-8'; '.json' = 'application/json; charset=utf-8';
     '.txt' = 'text/plain; charset=utf-8'; '.svg' = 'image/svg+xml'; '.png' = 'image/png'; '.ico' = 'image/x-icon' }
-$dossier = Join-Path $racine 'dictees'
+# Enregistrements des dictees : conserves avec les autres donnees (disque chiffre).
+$dossier = Join-Path $racine 'donnees\audio'
 $journal = Join-Path $racine 'journal'
 New-Item -ItemType Directory -Force $dossier, $journal | Out-Null
 # Journal de fonctionnement de la passerelle (etapes et erreurs, jamais de texte dicte).
@@ -400,6 +401,31 @@ function Transcrire([string]$wav, $flux) {
     return $texte.Trim()
 }
 
+# Duree de conservation (Reglages > Donnees) : archives et enregistrements plus anciens supprimes au
+# demarrage. 0 = conservation illimitee. Les dossiers patients et les tables d'anonymisation ne sont pas concernes.
+function Purger-Anciens {
+    $r = Lire-Reglages
+    $mois = 0
+    if ($r -and $r.general -and $r.general.conservation_mois) { $mois = [int]$r.general.conservation_mois }
+    if ($mois -le 0) { return }
+    $limite = (Get-Date).AddMonths(-$mois)
+    $n = 0
+    if (Test-Path $dossierArchives) {
+        foreach ($d in (Get-ChildItem -Path $dossierArchives -Directory)) {
+            $jour = [DateTime]::MinValue
+            if ([DateTime]::TryParseExact($d.Name, 'yyyy-MM-dd', $null, 'None', [ref]$jour) -and $jour -lt $limite) {
+                $n += @(Get-ChildItem $d.FullName -File).Count
+                Remove-Item $d.FullName -Recurse -Force
+            }
+        }
+    }
+    foreach ($f in (Get-ChildItem -Path $dossier -Filter '*.wav' -File -ErrorAction SilentlyContinue)) {
+        if ($f.LastWriteTime -lt $limite) { Remove-Item $f.FullName -Force; $n++ }
+    }
+    if ($n -gt 0) { Noter "conservation $mois mois : $n fichier(s) ancien(s) supprime(s)" }
+}
+try { Purger-Anciens } catch { Noter "purge impossible : $($_.Exception.Message)" }
+
 Noter "whisperfile : $whisper (present : $(Test-Path $whisper)) ; modele present : $(Test-Path $modele) ; $threads threads"
 try {
     $ecoute = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $port)
@@ -492,6 +518,14 @@ while ($true) {
             }
             Ecrire-JsonValide (Join-Path $dossierArchives $nomArchive) $req.Corps 20
             Repondre $flux 200 @{ ok = $true; fichier = $nomArchive } $origine
+        } elseif ($route -eq '/audio' -and $req.Methode -eq 'GET') {
+            # Reecoute d'un enregistrement depuis l'Historique
+            $nomAudio = Parametre $chemin 'fichier'
+            Verifier-Motif $nomAudio '^dictee-[\w-]+\.wav$' 'enregistrement'
+            $octets = [IO.File]::ReadAllBytes((Join-Path $dossier $nomAudio))
+            $entete = "HTTP/1.1 200 OK`r`nContent-Type: audio/wav`r`nContent-Length: $($octets.Length)`r`nCache-Control: no-store`r`nConnection: close`r`n`r`n"
+            $e = [Text.Encoding]::ASCII.GetBytes($entete)
+            $flux.Write($e, 0, $e.Length); $flux.Write($octets, 0, $octets.Length); $flux.Flush()
         } elseif ($route -eq '/archives' -and $req.Methode -eq 'GET') {
             Repondre $flux 200 @{ archives = (Lister-Archives (Parametre $chemin 'type') (Parametre $chemin 'texte')) } $origine
         } elseif ($route -eq '/archive' -and $req.Methode -eq 'GET') {
@@ -543,7 +577,7 @@ while ($true) {
             $boite.Clear()
             Repondre $flux 200 @{ elements = $elements } $origine
         } elseif ($req.Methode -eq 'POST' -and $route -eq '/transcrire') {
-            if ($chemin -match 'fichier=(dictee-[0-9-]+\.wav)') {
+            if ($chemin -match 'fichier=(dictee-[\w-]+\.wav)') {
                 # Nouvel essai sur un enregistrement deja sauvegarde
                 $nom = $Matches[1]
                 $wav = Join-Path $dossier $nom

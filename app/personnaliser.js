@@ -61,7 +61,16 @@
   let listes = {};
 
   function remplir(r) {
-    const s = r.signature || {}, red = r.redaction || {}, tr = r.transcription || {}, di = r.discussion || {};
+    const s = r.signature || {}, red = r.redaction || {}, tr = r.transcription || {}, di = r.discussion || {}, ge = r.general || {};
+    $('r-onglet').value = ge.onglet_demarrage || 'redaction';
+    $('r-theme').value = ge.theme || 'auto';
+    $('r-taille').value = String(ge.taille_texte || 100);
+    $('r-touche').value = ge.touche_dictee || 'F2';
+    $('r-insertion').value = ge.insertion_dictee || 'curseur';
+    $('r-copie-auto').checked = !!ge.copie_auto;
+    $('r-confirmer').checked = ge.confirmer_effacement !== false;
+    $('r-supprimer-audio').checked = !!ge.supprimer_audio;
+    $('r-conservation').value = String(ge.conservation_mois || 0);
     $('r-nom').value = s.nom || '';
     $('r-service').value = s.service || '';
     $('r-hopital').value = s.hopital || '';
@@ -110,6 +119,12 @@
       },
       discussion: { interface: choix ? choix.value : 'llamafile' },
       archivage: $('r-archivage').checked,
+      general: {
+        onglet_demarrage: $('r-onglet').value, theme: $('r-theme').value, taille_texte: Number($('r-taille').value),
+        touche_dictee: $('r-touche').value, insertion_dictee: $('r-insertion').value, copie_auto: $('r-copie-auto').checked,
+        confirmer_effacement: $('r-confirmer').checked, supprimer_audio: $('r-supprimer-audio').checked,
+        conservation_mois: Number($('r-conservation').value),
+      },
       raccourcis: listes.raccourcis.lire(),
       dictionnaire_transcription: listes.dictionnaire_transcription.lire(),
       glossaire: listes.glossaire.lire(),

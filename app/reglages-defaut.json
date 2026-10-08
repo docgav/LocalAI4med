@@ -1,4 +1,15 @@
 {
+  "general": {
+    "onglet_demarrage": "redaction",
+    "theme": "auto",
+    "taille_texte": 100,
+    "touche_dictee": "F2",
+    "insertion_dictee": "curseur",
+    "copie_auto": false,
+    "confirmer_effacement": true,
+    "supprimer_audio": false,
+    "conservation_mois": 0
+  },
   "signature": {
     "nom": "",
     "service": "Service de neurologie",

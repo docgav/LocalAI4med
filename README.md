@@ -15,7 +15,7 @@ de posologie, normalement signalée par `[À PRÉCISER]`).
 1. Copier le contenu du ZIP du dépôt dans un dossier `IA` à la racine du disque (chiffré par BitLocker To Go).
 2. Télécharger les programmes et modèles dans `IA\ressources\` : voir **[TELECHARGEMENTS.md](TELECHARGEMENTS.md)**.
 3. Facultatif : réglages personnels dans `ressources\config_perso.bat` (voir § 6) ; le reste se règle
-   dans l'onglet **Personnaliser**.
+   dans **⚙ Réglages** (bouton en haut à droite de la page).
 
 ## 2. Démarrer et arrêter
 
@@ -26,8 +26,8 @@ de posologie, normalement signalée par `[À PRÉCISER]`).
      **fenêtre InPrivate** d'Edge.
 2. **Gardez la fenêtre noire ouverte** pendant toute la session.
 3. En fin de session : taper **`Q`** puis Entrée dans la fenêtre noire. Cela arrête l'IA, efface les
-   fichiers temporaires (enregistrements audio, sauf réglage contraire) et vide le presse-papier.
-   Les documents conservés (§ 5) ne sont pas effacés.
+   fichiers temporaires et vide le presse-papier. Les enregistrements audio et les documents conservés
+   (§ 5) ne sont pas effacés, sauf réglage contraire.
 
 **Mode complet ou mode secours** (indiqué dans la fenêtre noire). Le mode complet utilise une petite
 passerelle PowerShell locale. Si PowerShell est bloqué sur le poste, le **mode secours** démarre
@@ -37,18 +37,19 @@ l'historique, l'enregistrement des réglages et les raccourcis clavier.
 
 ## 3. Barre du haut (commune à tous les onglets)
 
-- **🎙 Dicter** (ou `F2`) : enregistre le micro ; **Arrêter** (ou `F2`) lance la transcription. Le temps
-  restant est affiché. Le texte s'insère dans la zone de saisie de l'onglet affiché (ou est copié dans le
+- **🎙 Dicter** (ou `F2`, touche modifiable dans les réglages) : enregistre le micro ; **Arrêter** (même touche) lance la transcription. Le temps
+  restant est affiché. Le texte s'insère (au curseur, ou à la fin selon le réglage) dans la zone de saisie de l'onglet affiché (ou est copié dans le
   presse-papier s'il n'y en a pas : il suffit alors de coller avec `Ctrl+V`).
   - Au premier usage de la session, le navigateur demande l'autorisation du micro : accepter.
   - **▶** réécoute le dernier enregistrement ; **Réessayer** relance la transcription du même fichier.
   - **Fichier audio…** transcrit un enregistrement existant (wav, mp3, m4a, ogg…).
   - Les corrections du dictionnaire de transcription (§ 4.6) sont appliquées au texte.
-- **⚙ Modèles** : changer de modèle sans redémarrer.
+- **Modèles ▾** : changer de modèle sans redémarrer.
   - *Rédaction / discussion* (fichiers `.gguf` de `ressources\`) : choisir puis **Charger** (environ une
     minute ; images disponibles si le fichier mmproj correspondant est présent).
   - *Transcription* (fichiers `ggml*.bin`) : pris en compte dès la dictée suivante.
-- En haut à droite : modèle chargé et « (images) » s'il accepte les images.
+- En haut à droite : modèle chargé et « (images) » s'il accepte les images, puis **⚙ Réglages** (§ 4.6) ;
+  **← Retour** (ou un nouveau clic sur ⚙) ramène à l'onglet précédent.
 
 ## 4. Les onglets
 
@@ -69,7 +70,7 @@ où seuls les réflexes sont décrits comme vifs.
 Par défaut, **l'interface de discussion de llamafile**, préréglée en français pour la neurologie :
 historique, pièces jointes (PDF, images, texte), modification et régénération des réponses.
 - Cette interface n'existe **qu'en anglais** (le modèle répond en français). Pour une interface en
-  français, plus simple : Personnaliser → Discussion → « Interface intégrée ».
+  français, plus simple : ⚙ Réglages → Général → Discussion → « Interface intégrée ».
 - La dictée y est copiée dans le presse-papier : coller avec `Ctrl+V`.
 - Son historique est effacé à la fermeture de la fenêtre InPrivate ; seule la discussion intégrée est
   conservée dans l'Historique.
@@ -112,13 +113,22 @@ La détection automatique n'est pas infaillible : **relire le texte anonymisé a
 Tous les documents produits, enregistrés automatiquement : rédactions (avec les notes et chaque
 version), transcriptions, discussions de l'interface intégrée, productions de la synthèse patient,
 textes anonymisés. Filtre par type, recherche dans le contenu, **Copier le document**, **Reprendre dans
-Rédaction**, **Supprimer**.
+Rédaction**, **Supprimer**. Pour une transcription, l'enregistrement audio peut être réécouté tant qu'il
+est conservé.
 
-### 4.6 Personnaliser
-Enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conservé lors des mises à jour.
-- **Réglages** : signature des courriers (remplace `[NOM]`, `[HÔPITAL]` et le service dans les modèles),
-  créativité et longueur de la rédaction, affichage de la réflexion, **conservation automatique des
-  documents**, options de transcription, choix de l'interface de discussion.
+### 4.6 ⚙ Réglages (bouton en haut à droite)
+Ce n'est pas un onglet : le bouton ouvre les réglages, **← Retour** ramène à l'outil en cours.
+Tout est enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conservé lors des
+mises à jour. Bouton **Enregistrer les réglages** en bas.
+- **Général** : onglet affiché au démarrage, thème (automatique, clair, sombre), taille du texte,
+  touche de dictée (F2 à F10), insertion de la dictée (au curseur ou à la fin), copie automatique du
+  document rédigé, confirmation avant d'effacer, interface de discussion.
+- **Rédaction et signature** : signature des courriers (remplace `[NOM]`, `[HÔPITAL]` et le service dans
+  les modèles), créativité et longueur de la rédaction, affichage de la réflexion.
+- **Transcription** : options de whisper (§ 7).
+- **Données** : conservation automatique des documents, suppression des enregistrements audio à
+  l'arrêt (désactivée par défaut), durée de conservation (au-delà, les documents et enregistrements
+  plus anciens sont supprimés au démarrage ; « illimitée » par défaut).
 - **Modèles de documents** : modifier un modèle (votre version remplace l'originale, qui reste
   récupérable), en créer un, modifier les consignes communes (`_commun.txt`). Format :
   ```
@@ -155,7 +165,8 @@ Enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conse
 | `donnees\archives\` | documents produits (onglet Historique) | non (suppression à la main dans l'Historique) |
 | `donnees\patients\` | dossiers de la synthèse patient | non (bouton « Supprimer le dossier ») |
 | `donnees\anonymisation\` | tables de correspondance (permettent de réidentifier) | non |
-| `dictees\` | enregistrements audio de la session | à l'arrêt, sauf `CONSERVER_AUDIO=1` |
+| `donnees\audio\` | enregistrements des dictées (réécoute dans l'Historique) | non, sauf réglage « Données » |
+| `dictees\` | fichiers temporaires de la dictée de secours | à l'arrêt |
 | `app\dictee\` | dernière transcription de la dictée de secours | à l'arrêt |
 | `journal\` | journaux techniques (durées, erreurs), **sans texte dicté** | non |
 | navigateur | rien de patient (fenêtre InPrivate) ; seuls quelques réglages d'affichage | à la fermeture |
@@ -163,8 +174,9 @@ Enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conse
 - Le dossier **`donnees\` contient des données de santé** : il doit rester sur le disque chiffré, ne
   jamais être copié sur un poste ni une messagerie. Les tables d'anonymisation sont aussi sensibles que
   les documents d'origine.
-- La conservation automatique se désactive dans Personnaliser → Réglages (les dossiers patients et les
-  tables d'anonymisation restent enregistrés, puisque c'est leur fonction).
+- La conservation automatique, la suppression de l'audio et la durée de conservation se règlent dans
+  ⚙ Réglages → Données (les dossiers patients et les tables d'anonymisation restent enregistrés,
+  puisque c'est leur fonction).
 - Ce stockage doit figurer dans le dossier de validation (DSI/RSSI, registre RGPD du service).
 
 ## 6. Mettre à jour
@@ -187,7 +199,7 @@ set "PORT_DICTEE=8091"
    processeurs (sur un Xeon E-2124G : 250 s pour 20 s d'audio, dont 219 s d'encodage).
 2. Vérifier la taille du modèle `ggml-medium-q5_0.bin` : environ 540 Mo (1,4 Go = version non compressée,
    plus lente). `ggml-small-q5_1.bin` est environ 3 fois plus rapide, mais moins précis.
-3. Personnaliser → Transcription : « Fenêtre adaptée aux dictées courtes » (plus rapide sous 30 s,
+3. ⚙ Réglages → Transcription : « Fenêtre adaptée aux dictées courtes » (plus rapide sous 30 s,
    à tester). « Décodage rapide » est activé par défaut.
 4. Portable branché sur secteur, en mode « Performances optimales » ; disque sur un port USB 3.
 
@@ -216,12 +228,12 @@ IA/
 ├── Demarrer.bat / Arreter.bat   démarrage (fenêtre noire) et arrêt
 ├── config.bat                   réglages techniques (surchargés par ressources\config_perso.bat)
 ├── ressources/      *  programmes, modèles, réglages et modèles de documents personnels (TELECHARGEMENTS.md)
-├── donnees/         *  documents conservés : archives, dossiers patients, tables d'anonymisation
+├── donnees/         *  documents conservés : archives, audio, dossiers patients, tables d'anonymisation
 ├── app/                page de l'IA (onglets), prompts/ (modèles de documents d'origine),
 │                       discussion-config.json (préréglages de la discussion), lib/pdfjs (lecture des PDF)
 ├── scripts/            dictee-serveur.ps1 (passerelle), capteur.ps1 (raccourcis clavier),
 │                       serveur.bat, arrêt et nettoyage, dictée de secours (dictee.bat, micro.ps1)
-├── dictees/            audio de la session
+├── dictees/            fichiers temporaires de la dictée de secours
 ├── journal/            journaux techniques
 └── dev/                serveur factice pour tester la page sans modèle
 ```

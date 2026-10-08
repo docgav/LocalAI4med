@@ -15,7 +15,6 @@
     <button role="tab" data-vue="synthese" aria-selected="false">Synthèse patient</button>
     <button role="tab" data-vue="anonymisation" aria-selected="false">Anonymisation</button>
     <button role="tab" data-vue="historique" aria-selected="false">Historique</button>
-    <button role="tab" data-vue="personnaliser" aria-selected="false">Personnaliser</button>
   </nav>
   <div class="dictee">
     <button id="dicter" class="principal" disabled title="Dicter (F2)">🎙 Dicter</button>
@@ -29,7 +28,7 @@
     <span id="info-dictee" class="discret">Connexion à la dictée…</span>
   </div>
   <details id="reglages" hidden>
-    <summary>⚙ Modèles</summary>
+    <summary>Modèles ▾</summary>
     <div class="panneau">
       <label for="choix-llm">Rédaction / discussion</label>
       <div class="ligne"><select id="choix-llm"></select><button id="charger-llm" disabled>Charger</button></div>
@@ -39,6 +38,7 @@
     </div>
   </details>
   <span id="etat-serveur" class="etat">Serveur : …</span>
+  <button id="bouton-reglages" title="Réglages du logiciel">⚙ Réglages</button>
 </header>
 
 <main id="vue-redaction" class="vue grille">
@@ -213,6 +213,7 @@
     <section class="colonne">
       <strong id="hi-titre"></strong>
       <pre id="hi-vue" class="sortie-texte"></pre>
+      <audio id="hi-audio" controls hidden></audio>
       <div class="boutons">
         <button id="hi-copier" class="principal" hidden>Copier le document</button>
         <button id="hi-reprendre" hidden>Reprendre dans Rédaction</button>
@@ -229,32 +230,96 @@
       fenêtre InPrivate). En mode complet, elles sont enregistrées dans <code>ressources\</code>.
     </p>
 
+    <div class="ligne entete-zone">
+      <h2>Réglages</h2>
+      <button id="reglages-retour">← Retour</button>
+    </div>
+
     <details open>
-      <summary>Réglages</summary>
+      <summary>Général</summary>
+      <div class="formulaire">
+        <label>Onglet affiché au démarrage
+          <select id="r-onglet">
+            <option value="redaction">Rédaction</option>
+            <option value="discussion">Discussion</option>
+            <option value="synthese">Synthèse patient</option>
+            <option value="anonymisation">Anonymisation</option>
+            <option value="historique">Historique</option>
+          </select></label>
+        <label>Thème
+          <select id="r-theme">
+            <option value="auto">Automatique (comme Windows)</option>
+            <option value="clair">Clair</option>
+            <option value="sombre">Sombre</option>
+          </select></label>
+        <label>Taille du texte
+          <select id="r-taille">
+            <option value="90">Petite</option>
+            <option value="100">Normale</option>
+            <option value="115">Grande</option>
+            <option value="130">Très grande</option>
+          </select></label>
+        <label>Touche de dictée (démarrer / arrêter)
+          <select id="r-touche">
+            <option>F2</option><option>F3</option><option>F4</option><option>F6</option>
+            <option>F7</option><option>F8</option><option>F9</option><option>F10</option>
+          </select></label>
+        <label>Insertion du texte dicté
+          <select id="r-insertion">
+            <option value="curseur">À la position du curseur</option>
+            <option value="fin">À la fin du texte</option>
+          </select></label>
+        <label class="case"><input id="r-copie-auto" type="checkbox"> Copier automatiquement le document dans le presse-papier à la fin de la rédaction</label>
+        <label class="case"><input id="r-confirmer" type="checkbox"> Demander confirmation avant « Tout effacer »</label>
+        <h3>Discussion</h3>
+        <label class="case"><input type="radio" name="r-interface" value="llamafile"> Interface de llamafile : complète (historique, réglages…), en anglais</label>
+        <label class="case"><input type="radio" name="r-interface" value="integree"> Interface intégrée : en français, plus simple, dictée insérée directement, conservée dans l'Historique</label>
+      </div>
+    </details>
+
+    <details>
+      <summary>Rédaction et signature</summary>
       <div class="formulaire">
         <h3>Signature des courriers</h3>
         <label>Nom <input id="r-nom" placeholder="ex. Dupont (remplace [NOM])"></label>
         <label>Service <input id="r-service" placeholder="Service de neurologie"></label>
         <label>Hôpital <input id="r-hopital" placeholder="remplace [HÔPITAL]"></label>
-
-        <h3>Rédaction</h3>
+        <h3>Modèle de langage</h3>
         <label>Créativité (température) <input id="r-temperature" type="number" min="0" max="1.5" step="0.1">
           <span class="discret">0 = très fidèle aux notes, 1 = plus libre. Conseillé : 0,2 à 0,4.</span></label>
         <label>Longueur maximale (tokens) <input id="r-longueur" type="number" min="256" max="8192" step="256"></label>
         <label class="case"><input id="r-reflexion" type="checkbox"> Afficher la réflexion du modèle quand il y en a une</label>
-        <label class="case"><input id="r-archivage" type="checkbox"> Conserver automatiquement les documents produits (onglet Historique, dossier <code>donnees\archives\</code>)</label>
+      </div>
+    </details>
 
-        <h3>Transcription</h3>
+    <details>
+      <summary>Transcription</summary>
+      <div class="formulaire">
         <label class="case"><input id="r-rapide" type="checkbox"> Décodage rapide (recommandé ; décoché : un peu plus précis, 2 à 3 fois plus lent)</label>
         <label class="case"><input id="r-fenetre" type="checkbox"> Fenêtre adaptée aux dictées courtes (plus rapide sous 30 s, à tester)</label>
         <label>Threads du processeur <input id="r-threads" type="number" min="0" max="64">
           <span class="discret">0 = automatique (nombre de cœurs).</span></label>
         <label>Contexte donné à Whisper <input id="r-vocabulaire" placeholder="ex. Consultation de neurologie.">
           <span class="discret">Les termes du dictionnaire de transcription y sont ajoutés automatiquement.</span></label>
+      </div>
+    </details>
 
-        <h3>Discussion</h3>
-        <label class="case"><input type="radio" name="r-interface" value="llamafile"> Interface de llamafile : complète (historique, réglages…), en anglais</label>
-        <label class="case"><input type="radio" name="r-interface" value="integree"> Interface intégrée : en français, plus simple, dictée insérée directement</label>
+    <details>
+      <summary>Données</summary>
+      <div class="formulaire">
+        <span class="discret">Tout est enregistré dans <code>donnees\</code>, sur le disque chiffré.</span>
+        <label class="case"><input id="r-archivage" type="checkbox"> Conserver automatiquement les documents produits (onglet Historique, <code>donnees\archives\</code>)</label>
+        <label class="case"><input id="r-supprimer-audio" type="checkbox"> Supprimer les enregistrements audio à la fermeture (sinon conservés dans <code>donnees\audio\</code>, réécoutables depuis l'Historique)</label>
+        <label>Durée de conservation des documents et enregistrements
+          <select id="r-conservation">
+            <option value="0">Illimitée</option>
+            <option value="1">1 mois</option>
+            <option value="3">3 mois</option>
+            <option value="6">6 mois</option>
+            <option value="12">1 an</option>
+            <option value="24">2 ans</option>
+          </select>
+          <span class="discret">Les plus anciens sont supprimés au démarrage suivant. Les dossiers de la synthèse patient et les tables d'anonymisation ne sont pas concernés.</span></label>
       </div>
     </details>
 
@@ -351,7 +416,7 @@
     </details>
 
     <div class="boutons barre-enregistrer">
-      <button id="perso-enregistrer" class="principal">Enregistrer les réglages, formulations et dictionnaires</button>
+      <button id="perso-enregistrer" class="principal">Enregistrer les réglages</button>
       <button id="perso-defaut">Rétablir les valeurs par défaut</button>
       <span id="perso-info" class="discret"></span>
     </div>

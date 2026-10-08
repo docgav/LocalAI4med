@@ -43,8 +43,8 @@ set "VOCABULAIRE=Consultation de neurologie. Sclerose en plaques, IRM, EDSS, ocr
 
 rem --- Dictee integree a la page (passerelle PowerShell sur 127.0.0.1) ---
 set "PORT_DICTEE=8081"
-rem Audio des dictees (dictees\*.wav) : 0 = efface en fin de session, 1 = conserve.
-set "CONSERVER_AUDIO=0"
+rem Les enregistrements audio sont conserves dans donnees\audio\ (option de suppression
+rem a la fermeture et duree de conservation : page, Reglages > Donnees).
 
 rem --- Raccourcis clavier globaux (mode complet) : Ctrl+Alt+<touche> dans n'importe quel logiciel.
 rem TOUCHE_TEXTE envoie le texte selectionne, TOUCHE_IMAGE une capture d'ecran, a la Synthese patient.

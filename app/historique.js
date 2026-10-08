@@ -40,7 +40,7 @@
         return `Modèle : ${d.modele}\n\nNOTES\n${d.notes}\n\nDOCUMENT${versions.length > 1 ? ' (dernière version)' : ''}\n${versions[versions.length - 1] || ''}` +
           (versions.length > 1 ? `\n\nVERSIONS PRÉCÉDENTES\n${versions.slice(0, -1).join('\n\n')}` : '');
       }
-      case 'transcription': return `${d.texte}\n\n(audio : ${d.audio || '—'}, ${d.duree_audio || '?'} s)`;
+      case 'transcription': return `${d.texte}\n\n(enregistrement : donnees\\audio\\${d.audio || '—'}, ${d.duree_audio || '?'} s)`;
       case 'discussion': return (d.messages || []).map((m) => `${m.role === 'user' ? 'VOUS' : 'IA'} :\n${m.content}`).join('\n\n');
       case 'anonymisation': return `${d.texte}`;
       case 'synthese': return `Dossier : ${d.dossier}\n${d.question ? 'Question : ' + d.question + '\n' : ''}${d.consignes ? 'Consignes : ' + d.consignes + '\n' : ''}\n${d.texte}`;
@@ -62,6 +62,11 @@
       courante = { fichier, archive };
       el.titre.textContent = `${NOMS[archive.type] || archive.type} – ${archive.date} – ${archive.titre}`;
       el.vue.textContent = mettreEnForme(archive);
+      // Transcription : enregistrement réécoutable s'il est encore conservé (donnees\audio).
+      const audio = $('hi-audio'), nomAudio = archive.type === 'transcription' && (archive.donnees || {}).audio;
+      audio.hidden = !nomAudio;
+      if (nomAudio) audio.src = `http://127.0.0.1:${config.dictee}/audio?fichier=${encodeURIComponent(nomAudio)}`;
+      else audio.removeAttribute('src');
       el.reprendre.hidden = !['redaction', 'transcription'].includes(archive.type);
       [el.copier, el.supprimer].forEach((b) => { b.hidden = false; });
       el.liste.querySelectorAll('.element-liste').forEach((b) => b.classList.remove('actif'));

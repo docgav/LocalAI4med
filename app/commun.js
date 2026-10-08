@@ -236,20 +236,45 @@ const vues = {
 };
 let vueActive = 'redaction';
 
+// Les réglages (« personnaliser ») s'ouvrent par le bouton ⚙ Réglages, pas par un onglet ;
+// « Retour » ramène à l'outil précédent.
+let vuePrecedente = 'redaction';
 function afficherVue(nom) {
+  if (nom !== 'personnaliser' && vueActive !== 'personnaliser') vuePrecedente = nom;
+  if (nom === 'personnaliser' && vueActive !== 'personnaliser') vuePrecedente = vueActive;
   vueActive = nom;
   document.querySelectorAll('[data-vue]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.vue === nom)));
   document.querySelectorAll('.vue').forEach((v) => { v.hidden = v.id !== 'vue-' + nom; });
-  try { localStorage.setItem('vue', nom); } catch {}
+  $('bouton-reglages').classList.toggle('actif', nom === 'personnaliser');
+  if (nom !== 'personnaliser') { try { localStorage.setItem('vue', nom); } catch {} }
 }
 document.querySelectorAll('[data-vue]').forEach((b) => b.addEventListener('click', () => afficherVue(b.dataset.vue)));
-try { const v = localStorage.getItem('vue'); if (vues[v]) afficherVue(v); } catch {}
+$('bouton-reglages').addEventListener('click', () => afficherVue(vueActive === 'personnaliser' ? vuePrecedente : 'personnaliser'));
+$('reglages-retour').addEventListener('click', () => afficherVue(vuePrecedente));
+
+// Réglages généraux d'affichage : thème, taille du texte ; onglet de démarrage.
+function reglagesGeneraux() { return reglages.general || {}; }
+function appliquerAffichage() {
+  const g = reglagesGeneraux();
+  if (g.theme === 'clair' || g.theme === 'sombre') document.documentElement.dataset.theme = g.theme;
+  else delete document.documentElement.dataset.theme;
+  document.body.style.zoom = (Number(g.taille_texte) || 100) / 100;
+}
+reglagesPrets.then(() => {
+  appliquerAffichage();
+  let v = reglagesGeneraux().onglet_demarrage;
+  if (!v) { try { v = localStorage.getItem('vue'); } catch {} }
+  if (vues[v] && v !== 'personnaliser') afficherVue(v);
+});
+document.addEventListener('reglages-modifies', appliquerAffichage);
 
 // --- Dictée : scripts\dictee.bat dépose dictee/dictee.txt puis dictee/pret.txt (identifiant unique) ---
 // Le texte est inséré dans la zone de saisie de l'onglet affiché.
 function insererTexte(zone, texte) {
   texte = texte.trim();
   if (!texte) return;
+  // Réglage « Insertion du texte dicté » : à la fin plutôt qu'à la position du curseur.
+  if (reglagesGeneraux().insertion_dictee === 'fin') zone.setSelectionRange(zone.value.length, zone.value.length);
   const avant = zone.value.slice(0, zone.selectionStart);
   const apres = zone.value.slice(zone.selectionEnd);
   const prefixe = avant && !/\s$/.test(avant) ? '\n' : '';
