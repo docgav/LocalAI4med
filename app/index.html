@@ -281,9 +281,12 @@
     </details>
 
     <details>
-      <summary>Raccourcis de rédaction</summary>
+      <summary>Formulations types</summary>
       <div class="formulaire">
-        <span class="discret">Quand l'expression apparaît dans les notes (tapées ou dictées), elle est remplacée par le texte complet.</span>
+        <span class="discret">Textes types transmis au modèle (rédaction et synthèse patient). Les notes restent telles quelles :
+          quand elles y font référence, même en abrégé (« examen neuro normal ») ou avec des exceptions
+          (« ROT vifs mais reste de l'examen neuro normal »), le modèle rédige le texte type en l'adaptant.
+          Gardez des textes courts : ils sont envoyés à chaque demande.</span>
         <div id="liste-raccourcis" class="liste-editable"></div>
       </div>
     </details>
@@ -305,7 +308,7 @@
     </details>
 
     <div class="boutons barre-enregistrer">
-      <button id="perso-enregistrer" class="principal">Enregistrer les réglages, raccourcis et dictionnaires</button>
+      <button id="perso-enregistrer" class="principal">Enregistrer les réglages, formulations et dictionnaires</button>
       <button id="perso-defaut">Rétablir les valeurs par défaut</button>
       <span id="perso-info" class="discret"></span>
     </div>

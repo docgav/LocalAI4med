@@ -1,4 +1,4 @@
-// Onglet Personnaliser : réglages, modèles de documents, raccourcis, dictionnaire de transcription et
+// Onglet Personnaliser : réglages, modèles de documents, formulations types, dictionnaire de transcription et
 // glossaire. Enregistrés par la passerelle dans ressources\ (reglages.json, prompts\), donc conservés
 // lors des mises à jour. Aucune donnée patient ici : uniquement des préférences et des textes types.
 'use strict';
@@ -67,8 +67,8 @@
     document.querySelectorAll('input[name=r-interface]').forEach((b) => { b.checked = b.value === interfaceChoisie; });
     listes = {
       raccourcis: listeEditable($('liste-raccourcis'), [
-        { cle: 'declencheur', libelle: 'Expression', exemple: 'examen neurologique normal' },
-        { cle: 'texte', libelle: 'Texte complet', multiligne: true, exemple: 'Examen neurologique normal : …' },
+        { cle: 'declencheur', libelle: 'Désignation (comme dans vos notes)', exemple: 'examen neurologique normal' },
+        { cle: 'texte', libelle: 'Texte type', multiligne: true, exemple: 'Patient conscient et orienté. Paires crâniennes normales…' },
       ], r.raccourcis),
       dictionnaire_transcription: listeEditable($('liste-transcription'), [
         { cle: 'entendu', libelle: 'Transcrit à tort', exemple: 'natalisumab' },

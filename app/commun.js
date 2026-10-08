@@ -163,20 +163,28 @@ function corrigerTranscription(texte) {
   return texte;
 }
 
-// Raccourcis : une expression est remplacée par son texte complet (sauf s'il est déjà présent).
-function developperRaccourcis(texte) {
-  for (const r of reglages.raccourcis || []) {
-    if (!r.declencheur || !r.declencheur.trim() || !r.texte || texte.includes(r.texte)) continue;
-    texte = texte.replace(motEntier(r.declencheur), r.texte);
-  }
-  return texte;
-}
-
-// Glossaire et signature ajoutés aux consignes du modèle.
+// Consignes ajoutées au modèle : glossaire et formulations types (réglages « raccourcis »).
+// Les formulations types ne sont pas remplacées dans le texte : le modèle les reconnaît dans les notes,
+// même abrégées (« examen neuro normal ») ou avec des exceptions (« ROT vifs, reste de l'examen normal »),
+// et rédige le texte type en l'adaptant.
 function consignesPersonnelles() {
+  const parties = [];
   const g = (reglages.glossaire || []).filter((x) => x.terme && x.definition);
-  return g.length ? 'Abréviations et termes du service (à utiliser pour comprendre les notes) :\n' +
-    g.map((x) => `- ${x.terme} = ${x.definition}`).join('\n') : '';
+  if (g.length) {
+    parties.push('Abréviations et termes du service (à utiliser pour comprendre les notes) :\n' +
+      g.map((x) => `- ${x.terme} = ${x.definition}`).join('\n'));
+  }
+  const f = (reglages.raccourcis || []).filter((x) => x.declencheur && x.texte);
+  if (f.length) {
+    parties.push('Formulations types du service. Quand les notes y font référence, même de façon abrégée ' +
+      '(par exemple « examen neuro normal » ou « reste de l\'examen normal »), rédige la partie correspondante à ' +
+      'partir du texte type. Si les notes signalent des anomalies ou des exceptions (par exemple « ROT vifs mais reste ' +
+      'de l\'examen normal »), remplace les éléments concernés du texte type par ce que disent les notes et garde le ' +
+      'reste. Les notes sont toujours prioritaires sur le texte type. N\'utilise pas un texte type que les notes ' +
+      'n\'évoquent pas.\n' +
+      f.map((x) => `- « ${x.declencheur} » : ${x.texte}`).join('\n'));
+  }
+  return parties.join('\n\n');
 }
 function appliquerSignature(texte) {
   const s = reglages.signature || {};
@@ -248,7 +256,7 @@ function insererTexte(zone, texte) {
 // zone accessible. Renvoie un court compte rendu pour l'affichage.
 async function deposerTexte(texte) {
   await reglagesPrets;
-  texte = developperRaccourcis(corrigerTranscription(texte));
+  texte = corrigerTranscription(texte);
   const cible = vues[vueActive].cibleDictee();
   if (cible) { insererTexte(cible, texte); return 'insérée'; }
   const bouton = $('copier-dictee');

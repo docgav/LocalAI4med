@@ -43,7 +43,7 @@ l'historique, l'enregistrement des réglages et les raccourcis clavier.
   - Au premier usage de la session, le navigateur demande l'autorisation du micro : accepter.
   - **▶** réécoute le dernier enregistrement ; **Réessayer** relance la transcription du même fichier.
   - **Fichier audio…** transcrit un enregistrement existant (wav, mp3, m4a, ogg…).
-  - Les corrections du dictionnaire de transcription et les raccourcis (§ 4.6) sont appliqués au texte.
+  - Les corrections du dictionnaire de transcription (§ 4.6) sont appliquées au texte.
 - **⚙ Modèles** : changer de modèle sans redémarrer.
   - *Rédaction / discussion* (fichiers `.gguf` de `ressources\`) : choisir puis **Charger** (environ une
     minute ; images disponibles si le fichier mmproj correspondant est présent).
@@ -61,7 +61,9 @@ l'historique, l'enregistrement des réglages et les raccourcis clavier.
    **Version précédente** annule la dernière modification.
 5. **Copier**, puis coller dans le DPI.
 
-La signature (§ 4.6), le glossaire et les raccourcis sont pris en compte automatiquement.
+La signature, le glossaire et les formulations types (§ 4.6) sont pris en compte automatiquement :
+par exemple, « ROT vifs mais reste de l'examen neuro normal » donne un examen neurologique complet
+où seuls les réflexes sont décrits comme vifs.
 
 ### 4.2 Discussion
 Par défaut, **l'interface de discussion de llamafile**, préréglée en français pour la neurologie :
@@ -130,7 +132,10 @@ Enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conse
   le document attendu pour ces notes
   ```
   Deux ou trois paires d'exemples suffisent ; **exemples fictifs uniquement**.
-- **Raccourcis** : une expression (« examen neurologique normal ») est remplacée par son texte complet.
+- **Formulations types** : textes types transmis au modèle (ex. « examen neurologique normal » → examen
+  complet). Vos notes restent telles quelles ; quand elles y font référence, même en abrégé ou avec des
+  exceptions (« ROT vifs mais reste de l'examen normal »), le modèle rédige le texte type en l'adaptant.
+  À vérifier à la relecture : un petit modèle peut oublier une exception. Gardez les textes courts.
 - **Dictionnaire de transcription** : corrige ce que Whisper comprend mal (« natalisumab » → « natalizumab ») ;
   les formes correctes lui sont aussi données comme vocabulaire.
 - **Glossaire** : abréviations du service (SEP = sclérose en plaques), transmises au modèle.

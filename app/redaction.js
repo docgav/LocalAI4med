@@ -52,7 +52,7 @@
       messages.push({ role: 'user', content: ex.notes });
       messages.push({ role: 'assistant', content: appliquerSignature(ex.document) });
     }
-    messages.push({ role: 'user', content: developperRaccourcis(notes) });
+    messages.push({ role: 'user', content: notes });
     return messages;
   }
 
