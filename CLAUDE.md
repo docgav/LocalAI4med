@@ -97,8 +97,8 @@ obtenu). Noms de fichiers toujours validés par motif avant de construire un che
 Une seule page, onglets dans des blocs `{ }` (pas de collisions globales). `[hidden]` forcé en
 `display: none !important` ; dans les `.colonne` (flex en colonne), `input`/`select` en `flex: none`.
 - `commun.js` : config, `appelerModele` (streaming, stats, réflexion), `bilanGeneration`, réglages
-  (`reglages`, `reglagesPrets`, `enregistrerReglages`), `corrigerTranscription`, `developperRaccourcis`,
-  `consignesPersonnelles` (glossaire), `appliquerSignature`, `chargerDocuments`, onglets et `vues`
+  (`reglages`, `reglagesPrets`, `enregistrerReglages`), `corrigerTranscription` (seule transformation de la dictée),
+  `consignesPersonnelles` (glossaire + formulations types), `appliquerSignature`, `chargerDocuments`, onglets et `vues`
   (zone qui reçoit la dictée ; `null` → presse-papier), `deposerTexte`, lecture de fichiers
   (`lireDocument` : images JPEG réduites, PDF par pdf.js 3.11 dans `app/lib/pdfjs`, scripts classiques,
   texte), `passerelleJson`, `archiver(type, titre, donnees, fichier)`.
@@ -109,7 +109,8 @@ Une seule page, onglets dans des blocs `{ }` (pas de collisions globales). `[hid
   e-mail/NIR/téléphone, expressions longues, nom/prénom seuls, dates ; motifs insensibles aux accents ;
   identifiant `[ANON-…]` en tête), `historique.js`, `personnaliser.js`, `modeles.js`, `dictee.js`.
 - Prompts : `app/prompts/*.txt` (`### TITRE`, `### CONSIGNES`, paires `### EXEMPLE NOTES` /
-  `### EXEMPLE DOCUMENT`) ; système = `_commun.txt` + consignes + glossaire ; exemples en tours
+  `### EXEMPLE DOCUMENT`) ; système = `_commun.txt` + consignes + glossaire + formulations types (réglage
+  `raccourcis` : aucun remplacement textuel, le modèle les adapte aux notes, exceptions comprises) ; exemples en tours
   user/assistant ; signature appliquée au système et aux exemples.
 - Textes lus en UTF-8 via `TextDecoder` (le serveur ne précise pas toujours le charset).
 
