@@ -19,7 +19,6 @@
   let historique = [];   // messages au format API
   let enAttente = [];    // pièces jointes du prochain message : {type: 'image', nom, url} | {type: 'texte', nom, contenu}
   let controleur = null;
-  let archiveDiscussion = null;   // fichier d'archive de la discussion en cours
 
   // Même message système que l'interface de llamafile.
   lireTexte('discussion-config.json')
@@ -179,7 +178,8 @@
     el.info.textContent = 'Lecture…';
     let recu = '';
     try {
-      const r = await appelerModele([{ role: 'system', content: consignes }, ...historique], {
+      const systeme = [consignes, String(reglages.contexte_general || '').trim()].filter(Boolean).join('\n\n');
+      const r = await appelerModele([{ role: 'system', content: systeme }, ...historique], {
         signal: controleur.signal,
         surEtat: (m) => { el.info.textContent = m; },
         surTexte: (t) => { recu = t; majBulle(bulle, t); el.info.textContent = 'Rédaction…'; },
@@ -194,14 +194,7 @@
           (/context|contexte|exceed/i.test(e.message) ? '\n\nLa discussion est trop longue : commencez une nouvelle discussion ou joignez un document plus court.' : ''));
       }
     } finally {
-      if (recu) {
-        historique.push({ role: 'assistant', content: recu });
-        // Archivage de la discussion (texte seulement, images retirées), mise à jour à chaque réponse.
-        const messagesTexte = historique.map((m) => ({ role: m.role, content: typeof m.content === 'string' ? m.content
-          : m.content.filter((p) => p.type === 'text').map((p) => p.text).join('\n') + ' [image(s) jointe(s)]' }));
-        const titre = messagesTexte[0] ? messagesTexte[0].content.slice(0, 80) : 'Discussion';
-        archiveDiscussion = await archiver('discussion', titre, { messages: messagesTexte }, archiveDiscussion) || archiveDiscussion;
-      }
+      if (recu) historique.push({ role: 'assistant', content: recu });
       else historique.pop();  // échec sans réponse : on retire la question pour pouvoir la renvoyer
       controleur = null;
       el.envoyer.disabled = false; el.arreter.hidden = true;
@@ -216,7 +209,7 @@
   el.nouvelle.addEventListener('click', () => {
     if (historique.length && !confirm('Effacer la discussion en cours ?')) return;
     if (controleur) controleur.abort();
-    historique = []; enAttente = []; afficherPieces(); archiveDiscussion = null;
+    historique = []; enAttente = []; afficherPieces();
     el.fil.innerHTML = ''; el.saisie.value = ''; el.info.textContent = '';
   });
 

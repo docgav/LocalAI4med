@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 Projet : IA locale portable (disque USB chiffré) pour un neurologue hospitalier, novice en code.
-Dictée → transcription (whisper.cpp) → rédaction (Gemma via llamafile) ; discussion ; synthèse de
-dossier patient ; anonymisation ; historique. Le dépôt correspond au dossier `IA/` à la racine du disque.
+Dictée → transcription (whisper.cpp) → espace de travail par dossier patient (éléments → synthèse,
+documents, questions, anonymisation, par Gemma via llamafile) ; discussion ; réglages. Le dépôt correspond au dossier `IA/` à la racine du disque.
 L'utilisateur teste sur Windows ; ici, on ne peut tester que sous Linux (voir « Développement »).
 
 ## Contraintes (ne pas les perdre de vue)
@@ -14,7 +14,8 @@ L'utilisateur teste sur Windows ; ici, on ne peut tester que sous Linux (voir «
 - Rien ne sort de la machine : services sur `127.0.0.1` uniquement, **aucune ressource externe dans
   `app/`** (pas de CDN, pas de police distante), pas de télémétrie.
 - **Données patient** : conservées uniquement dans `donnees/` (sur le disque chiffré, jamais versionné),
-  à la demande de l'utilisateur (archives, dossiers patients, tables d'anonymisation). Jamais dans le
+  à la demande de l'utilisateur (dossiers patients, audio, tables d'anonymisation ; `archives/` des versions
+  précédentes, plus écrites). Le brouillon reste en mémoire de la page. Jamais dans le
   stockage du navigateur (localStorage limité à : onglet, type de document, micro, facteur de vitesse de
   transcription, réglages en mode secours), jamais dans `journal/` (le stdout de whisper, qui contient le
   texte, n'y va pas). Temporaires effacés par `scripts/nettoyer.bat` (appelé par `Arreter.bat`) :
@@ -47,7 +48,7 @@ L'utilisateur teste sur Windows ; ici, on ne peut tester que sous Linux (voir «
   app/discussion-config.json` (clés de `tools/ui/src/lib/constants/settings-keys.constants.ts` de
   llama.cpp). La page appelle l'API du modèle sur `http://127.0.0.1:PORT/` (CORS de llama-server : `*`).
 - **secours** : `llamafile --path app` sert la page ; API même origine ; pas de passerelle, donc pas de
-  dictée dans la page, de synthèse patient, d'historique, de capteur ni de réglages sur disque.
+  dictée dans la page, de dossiers (brouillon seulement), de capteur ni de réglages sur disque.
 - La page lit `app/dictee/config.json` ; mode complet si `location.port` = port de la passerelle.
 
 ## llamafile 0.10.6
@@ -75,7 +76,7 @@ obtenu). Noms de fichiers toujours validés par motif avant de construire un che
   `?fichier=` mise à jour), `/archives?type=&texte=` (300 plus récentes), `/archive?fichier=`,
   `/archive-supprimer` ; `/patients`, `/patient?id=` (GET/POST, 100 Mo max), `/patient-supprimer` ;
   `/correspondances`, `/correspondance?id=ANON-AAAAMMJJ-HHMMSS` ; `/audio?fichier=dictee-*.wav`
-  (`donnees/audio`, réécoute dans l'Historique). Au démarrage, `Purger-Anciens` supprime archives et WAV
+  (`donnees/audio`, réécoute depuis les éléments). Routes `/archiver`, `/archives`… gardées, plus utilisées. Au démarrage, `Purger-Anciens` supprime archives et WAV
   plus vieux que `general.conservation_mois` (0 = jamais).
 - `/boite` : POST par le capteur (gardé en mémoire, 50 max), GET par la page (vide la boîte).
 
@@ -97,7 +98,9 @@ obtenu). Noms de fichiers toujours validés par motif avant de construire un che
 
 ## Page (`app/`)
 
-Une seule page, onglets dans des blocs `{ }` (pas de collisions globales). Les réglages (vue
+Une seule page, onglets dans des blocs `{ }` (pas de collisions globales) : `travail` (Dossiers) et
+`discussion` ; les anciens onglets Rédaction, Synthèse patient, Anonymisation et Historique sont fondus
+dans `travail`. Les réglages (vue
 `personnaliser`) s'ouvrent par le bouton `⚙ Réglages` (pas un onglet, `vuePrecedente` pour le retour) ;
 `reglagesGeneraux()` / `appliquerAffichage()` : bloc `general` (thème `data-theme`, zoom, touche de dictée,
 insertion, copie auto, confirmation, onglet de démarrage). `[hidden]` forcé en
@@ -105,16 +108,22 @@ insertion, copie auto, confirmation, onglet de démarrage). `[hidden]` forcé en
 - `commun.js` : config, `appelerModele` (streaming, stats, réflexion), `bilanGeneration`, réglages
   (`reglages`, `reglagesPrets`, `enregistrerReglages`), `corrigerTranscription` (seule transformation de la dictée),
   `consignesPersonnelles` (glossaire scindé selon `autorisee` : abréviations utilisables / à écrire en
-  toutes lettres ; + formulations types), `appliquerSignature`, `chargerDocuments`, onglets et `vues`
+  toutes lettres ; précédé du contexte général `contexte_general` ; + formulations types), `appliquerSignature`, `chargerDocuments`, onglets et `vues`
   (zone qui reçoit la dictée ; `null` → presse-papier), `deposerTexte`, lecture de fichiers
   (`lireDocument` : images JPEG réduites, PDF par pdf.js 3.11 dans `app/lib/pdfjs`, scripts classiques,
-  texte), `passerelleJson`, `archiver(type, titre, donnees, fichier)`.
-- `redaction.js` (archive une rédaction, mise à jour à chaque modification), `discussion.js`
-  (interface de llamafile en iframe ou intégrée selon `discussion.interface` ; l'intégrée est archivée),
-  `synthese.js` (dossiers, éléments activables, boîte de réception relevée toutes les 2 s, outils
-  résumé / question / rédaction, au plus 4 images), `anonymisation.js` (ordre : date de naissance,
-  e-mail/NIR/téléphone, expressions longues, nom/prénom seuls, dates ; motifs insensibles aux accents ;
-  identifiant `[ANON-…]` en tête), `historique.js`, `personnaliser.js`, `modeles.js`, `dictee.js`, `apprentissage.js` (modèle à partir
+  texte), `passerelleJson`.
+- `travail.js` : dossiers à gauche (Brouillon en mémoire + `donnees/patients`, enregistrement différé
+  600 ms), éléments au centre (`{type: texte|image, nom, contenu|url, actif, source, audio[]}` ; saisie de
+  notes/dictée/collage ; aperçu dépliable ; liseuse `<dialog>` modifiable), créations à droite
+  (`productions` : `{outil: synthese|document|question|anonymisation, titre, texte, versions[]}` ; anciens
+  `resume`/`redaction` reconnus). Document : un seul élément texte coché → envoyé comme notes (few-shot),
+  sinon dossier « --- Élément n --- ». Saisie non vide ajoutée avant une création. Cible de la dictée :
+  dernier champ utilisé (`vues.travail.cibleDictee`) ; évènement `dictee-transcrite` (dictee.js) → audio
+  rattaché à la note. Boîte du capteur relevée toutes les 2 s, au plus 4 images envoyées.
+- `anonymisation.js` : fonctions seules (`Anonymisation.anonymiser/retablir/nouvelIdentifiant` ; ordre :
+  date de naissance, e-mail/NIR/téléphone, expressions longues, nom/prénom seuls, dates ; motifs
+  insensibles aux accents ; identifiant `[ANON-…]` en tête). `discussion.js` (interface de llamafile en
+  iframe ou intégrée selon `discussion.interface`, non enregistrée), `personnaliser.js`, `modeles.js`, `dictee.js`, `apprentissage.js` (modèle à partir
   d'exemples : une analyse JSON par document, 8 000 caractères lus, `response_format` json_schema avec
   repli sans ; fusion en consignes ; exemple fictif ; abréviations → glossaire, termes → vocabulaire via
   `window.personnaliserAjouter` ; documents fournis jamais enregistrés).

@@ -10,12 +10,10 @@
 <header>
   <h1>IA locale</h1>
   <nav role="tablist">
-    <button role="tab" data-vue="redaction" aria-selected="true">Rédaction</button>
+    <button role="tab" data-vue="travail" aria-selected="true">Dossiers</button>
     <button role="tab" data-vue="discussion" aria-selected="false">Discussion</button>
-    <button role="tab" data-vue="synthese" aria-selected="false">Synthèse patient</button>
-    <button role="tab" data-vue="anonymisation" aria-selected="false">Anonymisation</button>
-    <button role="tab" data-vue="historique" aria-selected="false">Historique</button>
   </nav>
+  <button id="bouton-reglages" title="Réglages du logiciel">⚙ Réglages</button>
   <div class="dictee">
     <button id="dicter" class="principal" disabled title="Dicter (F2)">🎙 Dicter</button>
     <meter id="niveau" min="0" max="1" value="0" hidden></meter>
@@ -38,46 +36,149 @@
     </div>
   </details>
   <span id="etat-serveur" class="etat">Serveur : …</span>
-  <button id="bouton-reglages" title="Réglages du logiciel">⚙ Réglages</button>
 </header>
 
-<main id="vue-redaction" class="vue grille">
+<main id="vue-travail" class="vue travail">
+  <!-- Gauche : dossiers -->
   <section class="colonne">
-    <div class="ligne">
-      <label for="type">Document</label>
-      <select id="type"></select>
-    </div>
-    <label for="notes">Notes / dictée</label>
-    <textarea id="notes" placeholder="Dictez (bouton « Dicter » ou F2), ou tapez vos notes ici…"></textarea>
-    <div class="boutons">
-      <button id="rediger" class="principal" title="Ctrl+Entrée">Rédiger</button>
-      <button id="stop" hidden>Arrêter</button>
-      <button id="reinserer" title="Réinsérer la dernière dictée">Dernière dictée</button>
-      <button id="effacer" class="danger">Tout effacer</button>
-    </div>
+    <div class="ligne entete-zone"><strong>Dossiers</strong><button id="tr-nouveau" class="principal">+ Nouveau</button></div>
+    <input id="tr-recherche" type="search" placeholder="Rechercher un dossier">
+    <div id="tr-liste" class="liste-defilante"></div>
+    <span id="tr-info-dossiers" class="discret"></span>
+    <span class="discret">Depuis un autre logiciel : <strong>Ctrl+Alt+T</strong> envoie le texte sélectionné,
+      <strong>Ctrl+Alt+P</strong> une capture d'une zone de l'écran, dans le dossier ouvert.</span>
   </section>
 
+  <!-- Centre : contenu du dossier -->
   <section class="colonne">
-    <div class="ligne entete-zone">
-      <label for="sortie">Document généré (modifiable)</label>
-      <span id="info-generation" class="discret"></span>
-    </div>
-    <details id="reflexion" hidden open>
-      <summary>Réflexion du modèle</summary>
-      <pre id="reflexion-texte"></pre>
-    </details>
-    <textarea id="sortie" placeholder="Le brouillon apparaîtra ici."></textarea>
-    <div id="stats-generation" class="discret"></div>
     <div class="ligne">
-      <input id="consigne" type="text" placeholder="Modifier : « plus court », « ajoute que le patient conduit »…">
-      <button id="affiner">Modifier</button>
+      <input id="tr-libelle" title="Libellé du dossier (de préférence non identifiant : initiales, chambre, date)">
+      <button id="tr-garder" hidden title="Enregistrer ce brouillon comme dossier dans donnees\patients\">Enregistrer comme dossier</button>
+      <button id="tr-supprimer" class="danger">Supprimer le dossier</button>
+    </div>
+    <span id="tr-avert-brouillon" class="discret" hidden>Brouillon : rien n'est enregistré sur le disque, le contenu est perdu à la
+      fermeture de la page. Créez un dossier (« + Nouveau » ou « Enregistrer comme dossier ») pour le conserver.</span>
+    <div id="tr-zone" class="zone-depot">
+      <input id="tr-titre-note" placeholder="Titre de l'élément (facultatif)">
+      <textarea id="tr-saisie" rows="6" placeholder="Notes libres : tapez ou dictez (🎙 ou F2). Ou collez un texte, une image ; glissez des PDF ou des images ici."></textarea>
+      <div class="boutons">
+        <button id="tr-ajouter" class="principal" title="Ajouter ce texte au dossier (Ctrl+Entrée lance l'outil choisi à droite)">Ajouter au dossier</button>
+        <button id="tr-fichiers">Fichiers…</button>
+        <input id="tr-choix-fichiers" type="file" multiple accept="image/*,.pdf,.txt,.md" hidden>
+        <button id="tr-vider">Effacer la saisie</button>
+      </div>
+    </div>
+    <div class="ligne entete-zone">
+      <span id="tr-taille" class="discret"></span>
+      <span class="boutons">
+        <button id="tr-tout-inclure" title="Cocher ou décocher tous les éléments">Tout inclure</button>
+        <button id="tr-deplier" title="Afficher le texte complet de chaque élément">Tout déplier</button>
+      </span>
+    </div>
+    <div id="tr-elements" class="liste-defilante elements"></div>
+  </section>
+
+  <!-- Droite : créations -->
+  <section class="colonne outils">
+    <div class="onglets-outils" role="tablist">
+      <button role="tab" data-outil="synthese" aria-selected="true">Synthèse</button>
+      <button role="tab" data-outil="document" aria-selected="false">Document</button>
+      <button role="tab" data-outil="question" aria-selected="false">Question</button>
+      <button role="tab" data-outil="anonymisation" aria-selected="false">Anonymisation</button>
+    </div>
+
+    <div id="outil-synthese" class="panneau-outil">
+      <span class="discret">Synthèse structurée des éléments cochés : antécédents, histoire chronologique, traitements,
+        examens, problèmes actifs, points à vérifier. Chaque fait cite son élément source.</span>
+      <input id="tr-sy-consignes" placeholder="Consignes complémentaires (facultatif) : « centrée sur la SEP »…">
+      <div class="boutons"><button id="tr-sy-lancer" class="principal" title="Ctrl+Entrée">Rédiger la synthèse</button></div>
+    </div>
+
+    <div id="outil-document" class="panneau-outil" hidden>
+      <div class="ligne"><label for="tr-type">Type</label><select id="tr-type"></select></div>
+      <input id="tr-doc-consignes" placeholder="Consignes complémentaires (facultatif) : « destinataire : Dr X »…">
+      <div class="boutons"><button id="tr-doc-lancer" class="principal" title="Ctrl+Entrée">Rédiger le document</button></div>
+      <span class="discret">Rédigé à partir des éléments cochés (notes, dictées, comptes rendus…).
+        Modèles modifiables dans ⚙ Réglages → Modèles de documents.</span>
+    </div>
+
+    <div id="outil-question" class="panneau-outil" hidden>
+      <div class="ligne"><input id="tr-question" placeholder="Question sur le dossier (Entrée pour envoyer)"><button id="tr-question-lancer" class="principal">Demander</button></div>
+    </div>
+
+    <div id="outil-anonymisation" class="panneau-outil" hidden>
+      <div class="grille-champs">
+        <label>Nom <input id="an-nom"></label>
+        <label>Prénom(s) <input id="an-prenom"></label>
+        <label>Date de naissance <input id="an-naissance" placeholder="jj/mm/aaaa"></label>
+      </div>
+      <label>Autres éléments à masquer (un par ligne : proches, adresse, n° de dossier…)
+        <textarea id="an-autres" rows="2"></textarea></label>
+      <div class="ligne options">
+        <label class="case"><input id="an-dates" type="checkbox"> toutes les dates</label>
+        <label class="case"><input id="an-tel" type="checkbox" checked> téléphones</label>
+        <label class="case"><input id="an-mail" type="checkbox" checked> e-mails</label>
+        <label class="case"><input id="an-nir" type="checkbox" checked> n° de sécurité sociale</label>
+      </div>
+      <div class="boutons">
+        <button id="an-detecter" title="Le modèle repère les noms, lieux et identifiants des éléments cochés et les ajoute à la liste">Détecter avec l'IA</button>
+        <button id="an-lancer" class="principal" title="Anonymise les éléments cochés">Anonymiser</button>
+      </div>
+      <details>
+        <summary>Désanonymiser un texte</summary>
+        <div class="ligne">
+          <select id="an-table"><option value="">Identifiant lu dans le texte</option></select>
+          <button id="an-retablir" title="Remplace les jetons du résultat ci-dessous par les valeurs d'origine">Rétablir le résultat</button>
+        </div>
+        <span class="discret">Collez dans le cadre « Résultat » un texte contenant des jetons ([NOM], [DATE_1]…) et son identifiant [ANON-…].</span>
+      </details>
+    </div>
+
+    <div class="ligne entete-zone">
+      <strong id="tr-sortie-titre">Résultat</strong>
+      <span id="tr-info" class="discret"></span>
+    </div>
+    <details id="tr-reflexion" class="reflexion" hidden open>
+      <summary>Réflexion du modèle</summary>
+      <pre id="tr-reflexion-texte"></pre>
+    </details>
+    <textarea id="tr-sortie" placeholder="Le résultat apparaîtra ici. Il est modifiable et enregistré dans le dossier."></textarea>
+    <div id="tr-stats" class="discret"></div>
+    <div class="ligne" id="tr-ligne-affiner">
+      <input id="tr-consigne" placeholder="Modifier : « plus court », « ajoute que le patient conduit »…">
+      <button id="tr-affiner">Modifier</button>
     </div>
     <div class="boutons">
-      <button id="copier" class="principal">Copier</button>
-      <button id="annuler" disabled>Version précédente</button>
+      <button id="tr-copier" class="principal">Copier</button>
+      <button id="tr-annuler" disabled>Version précédente</button>
+      <button id="tr-lire-sortie" title="Relire le résultat en grand">Lire en grand</button>
+      <button id="tr-vers-dossier" title="Ajouter le résultat aux éléments du dossier (pour s'en servir dans une autre création)">Ajouter aux éléments</button>
+      <button id="tr-arreter" hidden>Arrêter</button>
     </div>
+    <details id="tr-bloc-productions" open>
+      <summary id="tr-productions-titre">Créations du dossier</summary>
+      <div id="tr-productions" class="liste-defilante courte"></div>
+    </details>
   </section>
 </main>
+
+<!-- Liseuse : lecture et modification du texte complet d'un élément ou d'une création -->
+<dialog id="liseuse">
+  <div class="ligne">
+    <input id="li-titre" title="Titre">
+    <span id="li-position" class="discret"></span>
+    <button id="li-prec" title="Précédent">◀</button>
+    <button id="li-suiv" title="Suivant">▶</button>
+    <button id="li-fermer" class="principal">Fermer</button>
+  </div>
+  <span id="li-info" class="discret"></span>
+  <textarea id="li-texte" spellcheck="true"></textarea>
+  <img id="li-image" alt="" hidden>
+  <div class="boutons">
+    <button id="li-copier">Copier</button>
+    <span class="discret">Les modifications sont enregistrées dans le dossier. Échap ou « Fermer » pour revenir.</span>
+  </div>
+</dialog>
 
 <main id="vue-discussion" class="vue" hidden>
   <!-- Mode complet : interface de discussion par défaut de llamafile (préréglée par discussion-config.json) -->
@@ -104,125 +205,6 @@
   </section>
 </main>
 
-<main id="vue-synthese" class="vue" hidden>
-  <div class="trois-colonnes">
-    <section class="colonne">
-      <div class="ligne"><strong>Dossiers</strong><button id="sy-nouveau" class="principal">Nouveau</button></div>
-      <input id="sy-recherche" type="search" placeholder="Rechercher un dossier">
-      <div id="sy-liste" class="liste-defilante"></div>
-      <span id="sy-boite" class="avertissement"></span>
-      <span class="discret">Depuis un autre logiciel : <strong>Ctrl+Alt+T</strong> envoie le texte sélectionné,
-        <strong>Ctrl+Alt+P</strong> une capture d'une zone de l'écran, dans le dossier ouvert.</span>
-    </section>
-
-    <section class="colonne">
-      <p id="sy-vide" class="discret">Ouvrez un dossier ou créez-en un nouveau. Les dossiers sont enregistrés dans
-        <code>donnees\patients\</code> sur le disque chiffré. Utilisez un libellé non identifiant si possible.</p>
-      <div id="sy-dossier" hidden>
-        <div class="ligne">
-          <input id="sy-libelle" title="Libellé du dossier">
-          <button id="sy-supprimer" class="danger">Supprimer le dossier</button>
-        </div>
-        <div id="sy-zone" class="zone-depot">
-          <textarea id="sy-coller" rows="4" placeholder="Collez ici du texte (compte rendu, biologie…) ou une image, ou glissez des PDF / images."></textarea>
-          <div class="boutons">
-            <button id="sy-ajouter-texte">Ajouter le texte</button>
-            <button id="sy-fichiers">Ajouter des fichiers…</button>
-            <input id="sy-choix-fichiers" type="file" multiple accept="image/*,.pdf,.txt,.md" hidden>
-          </div>
-        </div>
-        <span id="sy-taille" class="discret"></span>
-        <div id="sy-elements" class="liste-defilante"></div>
-      </div>
-    </section>
-
-    <section class="colonne">
-      <strong>Outils</strong>
-      <button id="sy-resume" class="principal">Synthèse de l'histoire</button>
-      <div class="ligne"><input id="sy-question" placeholder="Question sur le dossier (Entrée pour envoyer)"><button id="sy-poser">Demander</button></div>
-      <div class="ligne"><select id="sy-type"></select><button id="sy-rediger">Rédiger</button></div>
-      <input id="sy-consignes" placeholder="Consignes complémentaires pour la rédaction (facultatif)">
-      <button id="sy-arreter" hidden>Arrêter</button>
-      <span id="sy-info" class="discret"></span>
-      <details id="sy-reflexion" hidden open><summary>Réflexion du modèle</summary><pre id="sy-reflexion-texte"></pre></details>
-      <div id="sy-sortie" class="sortie-texte" aria-live="polite"></div>
-      <div class="ligne entete-zone"><span id="sy-stats" class="discret"></span><button id="sy-copier">Copier</button></div>
-      <strong>Productions du dossier</strong>
-      <div id="sy-productions" class="liste-defilante courte"></div>
-    </section>
-  </div>
-</main>
-
-<main id="vue-anonymisation" class="vue grille" hidden>
-  <section class="colonne">
-    <strong>Anonymiser</strong>
-    <div class="grille-champs">
-      <label>Nom <input id="an-nom"></label>
-      <label>Prénom(s) <input id="an-prenom"></label>
-      <label>Date de naissance <input id="an-naissance" placeholder="jj/mm/aaaa"></label>
-    </div>
-    <label>Autres éléments à masquer (un par ligne : proches, adresse, n° de dossier…)
-      <textarea id="an-autres" rows="3"></textarea></label>
-    <div class="ligne options">
-      <label class="case"><input id="an-dates" type="checkbox"> toutes les dates</label>
-      <label class="case"><input id="an-tel" type="checkbox" checked> téléphones</label>
-      <label class="case"><input id="an-mail" type="checkbox" checked> e-mails</label>
-      <label class="case"><input id="an-nir" type="checkbox" checked> n° de sécurité sociale</label>
-    </div>
-    <textarea id="an-entree" placeholder="Collez le texte à anonymiser, ou ouvrez un fichier (texte ou PDF)."></textarea>
-    <div class="boutons">
-      <button id="an-ouvrir">Ouvrir un fichier…</button>
-      <input id="an-fichier" type="file" accept=".txt,.md,.pdf" hidden>
-      <button id="an-detecter" title="Le modèle repère les noms, lieux et identifiants et les ajoute à la liste">Détecter avec l'IA</button>
-      <button id="an-anonymiser" class="principal">Anonymiser</button>
-    </div>
-    <span id="an-info" class="discret"></span>
-  </section>
-  <section class="colonne">
-    <strong>Texte anonymisé</strong>
-    <textarea id="an-sortie" placeholder="Le texte anonymisé apparaîtra ici, précédé de son identifiant [ANON-…]."></textarea>
-    <div class="boutons"><button id="an-copier" class="principal">Copier</button></div>
-    <details><summary>Correspondances</summary><table class="table-correspondances"><tbody id="an-table"></tbody></table></details>
-    <hr>
-    <strong>Désanonymiser</strong>
-    <select id="an-choix-inverse"><option value="">Identifiant lu dans le texte</option></select>
-    <textarea id="an-entree-inverse" rows="5" placeholder="Collez un texte contenant des jetons ([NOM], [DATE_1]…) et son identifiant [ANON-…]."></textarea>
-    <div class="boutons"><button id="an-desanonymiser" class="principal">Désanonymiser</button><span id="an-info-inverse" class="discret"></span></div>
-    <textarea id="an-sortie-inverse" rows="5" placeholder="Texte rétabli."></textarea>
-    <div class="boutons"><button id="an-copier-inverse">Copier</button></div>
-  </section>
-</main>
-
-<main id="vue-historique" class="vue" hidden>
-  <div class="historique">
-    <section class="colonne">
-      <div class="ligne">
-        <select id="hi-type">
-          <option value="">Tous les documents</option>
-          <option value="redaction">Rédactions</option>
-          <option value="transcription">Transcriptions</option>
-          <option value="discussion">Discussions</option>
-          <option value="synthese">Synthèse patient</option>
-          <option value="anonymisation">Anonymisations</option>
-        </select>
-      </div>
-      <input id="hi-recherche" type="search" placeholder="Rechercher dans le contenu">
-      <span id="hi-info" class="discret"></span>
-      <div id="hi-liste" class="liste-defilante"></div>
-    </section>
-    <section class="colonne">
-      <strong id="hi-titre"></strong>
-      <pre id="hi-vue" class="sortie-texte"></pre>
-      <audio id="hi-audio" controls hidden></audio>
-      <div class="boutons">
-        <button id="hi-copier" class="principal" hidden>Copier le document</button>
-        <button id="hi-reprendre" hidden>Reprendre dans Rédaction</button>
-        <button id="hi-supprimer" class="danger" hidden>Supprimer</button>
-      </div>
-    </section>
-  </div>
-</main>
-
 <main id="vue-personnaliser" class="vue" hidden>
   <section class="colonne personnaliser">
     <p id="perso-avertissement" class="avertissement" hidden>
@@ -240,11 +222,8 @@
       <div class="formulaire">
         <label>Onglet affiché au démarrage
           <select id="r-onglet">
-            <option value="redaction">Rédaction</option>
+            <option value="travail">Dossiers</option>
             <option value="discussion">Discussion</option>
-            <option value="synthese">Synthèse patient</option>
-            <option value="anonymisation">Anonymisation</option>
-            <option value="historique">Historique</option>
           </select></label>
         <label>Thème
           <select id="r-theme">
@@ -269,17 +248,21 @@
             <option value="curseur">À la position du curseur</option>
             <option value="fin">À la fin du texte</option>
           </select></label>
-        <label class="case"><input id="r-copie-auto" type="checkbox"> Copier automatiquement le document dans le presse-papier à la fin de la rédaction</label>
-        <label class="case"><input id="r-confirmer" type="checkbox"> Demander confirmation avant « Tout effacer »</label>
+        <label class="case"><input id="r-copie-auto" type="checkbox"> Copier automatiquement le document rédigé dans le presse-papier</label>
+        <label class="case"><input id="r-confirmer" type="checkbox"> Demander confirmation avant de retirer un élément ou d'effacer la saisie</label>
         <h3>Discussion</h3>
         <label class="case"><input type="radio" name="r-interface" value="llamafile"> Interface de llamafile : complète (historique, réglages…), en anglais</label>
-        <label class="case"><input type="radio" name="r-interface" value="integree"> Interface intégrée : en français, plus simple, dictée insérée directement, conservée dans l'Historique</label>
+        <label class="case"><input type="radio" name="r-interface" value="integree"> Interface intégrée : en français, plus simple, dictée insérée directement</label>
       </div>
     </details>
 
     <details>
-      <summary>Rédaction et signature</summary>
+      <summary>Contexte général et signature</summary>
       <div class="formulaire">
+        <label>Contexte général (pré-prompt), transmis au modèle à chaque demande
+          <textarea id="r-contexte" class="texte-libre" rows="5" placeholder="ex. Je suis neurologue dans un service de neurologie générale avec une unité SEP. Les documents sont adressés à des médecins. Style sobre, phrases courtes, pas de formule de politesse superflue."></textarea>
+          <span class="discret">Décrivez votre activité, vos destinataires habituels, votre style. Restez bref : ce texte est envoyé à chaque demande.
+            Il s'applique aux synthèses, documents, questions et à la discussion intégrée.</span></label>
         <h3>Signature des courriers</h3>
         <label>Nom <input id="r-nom" placeholder="ex. Dupont (remplace [NOM])"></label>
         <label>Service <input id="r-service" placeholder="Service de neurologie"></label>
@@ -289,37 +272,6 @@
           <span class="discret">0 = très fidèle aux notes, 1 = plus libre. Conseillé : 0,2 à 0,4.</span></label>
         <label>Longueur maximale (tokens) <input id="r-longueur" type="number" min="256" max="8192" step="256"></label>
         <label class="case"><input id="r-reflexion" type="checkbox"> Afficher la réflexion du modèle quand il y en a une</label>
-      </div>
-    </details>
-
-    <details>
-      <summary>Transcription</summary>
-      <div class="formulaire">
-        <label class="case"><input id="r-rapide" type="checkbox"> Décodage rapide (recommandé ; décoché : un peu plus précis, 2 à 3 fois plus lent)</label>
-        <label class="case"><input id="r-fenetre" type="checkbox"> Fenêtre adaptée aux dictées courtes (plus rapide sous 30 s, à tester)</label>
-        <label>Threads du processeur <input id="r-threads" type="number" min="0" max="64">
-          <span class="discret">0 = automatique (nombre de cœurs).</span></label>
-        <label>Contexte donné à Whisper <input id="r-vocabulaire" placeholder="ex. Consultation de neurologie.">
-          <span class="discret">Les termes du dictionnaire de transcription y sont ajoutés automatiquement.</span></label>
-      </div>
-    </details>
-
-    <details>
-      <summary>Données</summary>
-      <div class="formulaire">
-        <span class="discret">Tout est enregistré dans <code>donnees\</code>, sur le disque chiffré.</span>
-        <label class="case"><input id="r-archivage" type="checkbox"> Conserver automatiquement les documents produits (onglet Historique, <code>donnees\archives\</code>)</label>
-        <label class="case"><input id="r-supprimer-audio" type="checkbox"> Supprimer les enregistrements audio à la fermeture (sinon conservés dans <code>donnees\audio\</code>, réécoutables depuis l'Historique)</label>
-        <label>Durée de conservation des documents et enregistrements
-          <select id="r-conservation">
-            <option value="0">Illimitée</option>
-            <option value="1">1 mois</option>
-            <option value="3">3 mois</option>
-            <option value="6">6 mois</option>
-            <option value="12">1 an</option>
-            <option value="24">2 ans</option>
-          </select>
-          <span class="discret">Les plus anciens sont supprimés au démarrage suivant. Les dossiers de la synthèse patient et les tables d'anonymisation ne sont pas concernés.</span></label>
       </div>
     </details>
 
@@ -387,9 +339,19 @@
     </details>
 
     <details>
+      <summary>Abréviations (glossaire)</summary>
+      <div class="formulaire">
+        <span class="discret">Abréviations du service, transmises au modèle pour comprendre les notes. Case « utilisable » cochée :
+          le modèle peut employer l'abréviation dans le document (ex. IRM) ; décochée : il l'écrit toujours en toutes lettres
+          (ex. SEP → sclérose en plaques).</span>
+        <div id="liste-glossaire" class="liste-editable"></div>
+      </div>
+    </details>
+
+    <details>
       <summary>Formulations types</summary>
       <div class="formulaire">
-        <span class="discret">Textes types transmis au modèle (rédaction et synthèse patient). Les notes restent telles quelles :
+        <span class="discret">Textes types transmis au modèle. Les notes restent telles quelles :
           quand elles y font référence, même en abrégé (« examen neuro normal ») ou avec des exceptions
           (« ROT vifs mais reste de l'examen neuro normal »), le modèle rédige le texte type en l'adaptant.
           Gardez des textes courts : ils sont envoyés à chaque demande.</span>
@@ -398,20 +360,37 @@
     </details>
 
     <details>
-      <summary>Dictionnaire de transcription</summary>
+      <summary>Transcription</summary>
       <div class="formulaire">
+        <label class="case"><input id="r-rapide" type="checkbox"> Décodage rapide (recommandé ; décoché : un peu plus précis, 2 à 3 fois plus lent)</label>
+        <label class="case"><input id="r-fenetre" type="checkbox"> Fenêtre adaptée aux dictées courtes (plus rapide sous 30 s, à tester)</label>
+        <label>Threads du processeur <input id="r-threads" type="number" min="0" max="64">
+          <span class="discret">0 = automatique (nombre de cœurs).</span></label>
+        <label>Contexte donné à Whisper <input id="r-vocabulaire" placeholder="ex. Consultation de neurologie.">
+          <span class="discret">Les termes du dictionnaire ci-dessous y sont ajoutés automatiquement.</span></label>
+        <h3>Dictionnaire de transcription</h3>
         <span class="discret">Corrige automatiquement ce que Whisper comprend mal. Les formes correctes servent aussi de vocabulaire à Whisper.</span>
         <div id="liste-transcription" class="liste-editable"></div>
       </div>
     </details>
 
     <details>
-      <summary>Glossaire de rédaction</summary>
+      <summary>Données</summary>
       <div class="formulaire">
-        <span class="discret">Abréviations du service, transmises au modèle pour comprendre les notes. Case « utilisable » cochée :
-          le modèle peut employer l'abréviation dans le document (ex. IRM) ; décochée : il l'écrit toujours en toutes lettres
-          (ex. SEP → sclérose en plaques).</span>
-        <div id="liste-glossaire" class="liste-editable"></div>
+        <span class="discret">Dossiers (<code>donnees\patients\</code>), enregistrements des dictées (<code>donnees\audio\</code>) et tables
+          d'anonymisation (<code>donnees\anonymisation\</code>) sont enregistrés sur le disque chiffré.</span>
+        <label class="case"><input id="r-supprimer-audio" type="checkbox"> Supprimer les enregistrements audio à la fermeture (sinon conservés, réécoutables depuis les éléments du dossier)</label>
+        <label>Durée de conservation des enregistrements audio
+          <select id="r-conservation">
+            <option value="0">Illimitée</option>
+            <option value="1">1 mois</option>
+            <option value="3">3 mois</option>
+            <option value="6">6 mois</option>
+            <option value="12">1 an</option>
+            <option value="24">2 ans</option>
+          </select>
+          <span class="discret">Les plus anciens sont supprimés au démarrage suivant. Les dossiers et les tables d'anonymisation ne sont pas concernés
+            (suppression à la main : bouton « Supprimer le dossier »).</span></label>
       </div>
     </details>
 
@@ -425,17 +404,15 @@
 
 <footer>
   Réponses générées localement : relecture obligatoire, en particulier des posologies. Rien n'est envoyé hors de cet ordinateur.
-  Les documents sont conservés dans <code>donnees\</code> sur le disque chiffré (onglet Historique). En fin de session : « Q » dans la fenêtre noire.
+  Les dossiers sont conservés dans <code>donnees\</code> sur le disque chiffré. En fin de session : « Q » dans la fenêtre noire.
 </footer>
 <script src="commun.js"></script>
 <script src="dictee.js"></script>
-<script src="redaction.js"></script>
+<script src="anonymisation.js"></script>
+<script src="travail.js"></script>
 <script src="discussion.js"></script>
 <script src="modeles.js"></script>
 <script src="personnaliser.js"></script>
-<script src="synthese.js"></script>
-<script src="anonymisation.js"></script>
-<script src="historique.js"></script>
 <script src="apprentissage.js"></script>
 </body>
 </html>

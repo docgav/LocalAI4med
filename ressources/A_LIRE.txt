@@ -10,7 +10,7 @@ Placez ici TOUS les fichiers telecharges (voir TELECHARGEMENTS.md) :
 Facultatifs : gemma-4-E4B-it-Q4_K_M.gguf, mmproj-E2B.gguf, mmproj-E4B.gguf,
 autres modeles ggml-*.bin.
 
-Crees automatiquement : reglages.json et prompts\ (onglet Personnaliser).
+Crees automatiquement : reglages.json et prompts\ (bouton Reglages de la page).
 Vous pouvez ajouter config_perso.bat (reglages techniques, lu apres config.bat).
 
 Les mises a jour ne touchent jamais ce dossier.

@@ -1,4 +1,4 @@
-// Fonctions partagées par les onglets Rédaction et Discussion.
+// Fonctions partagées par l'espace de travail (dossiers), la discussion et les réglages.
 // Mode complet : page servie par la passerelle (scripts/dictee-serveur.ps1), API du modèle sur le port
 // de llamafile, qui sert aussi son interface de discussion par défaut (affichée dans l'onglet Discussion).
 // Mode secours (PowerShell bloqué) : page servie par llamafile (--path app), API sur la même origine.
@@ -165,12 +165,15 @@ function corrigerTranscription(texte) {
   return texte;
 }
 
-// Consignes ajoutées au modèle : glossaire et formulations types (réglages « raccourcis »).
+// Consignes ajoutées au modèle : contexte général, glossaire et formulations types (réglages « raccourcis »).
 // Les formulations types ne sont pas remplacées dans le texte : le modèle les reconnaît dans les notes,
 // même abrégées (« examen neuro normal ») ou avec des exceptions (« ROT vifs, reste de l'examen normal »),
 // et rédige le texte type en l'adaptant.
 function consignesPersonnelles() {
   const parties = [];
+  // Contexte général (pré-prompt) saisi dans les réglages.
+  const contexte = String(reglages.contexte_general || '').trim();
+  if (contexte) parties.push('Contexte donné par le médecin utilisateur :\n' + contexte);
   // Glossaire : toutes les abréviations servent à comprendre les notes ; seules celles cochées
   // « utilisable » peuvent apparaître dans le document, les autres sont écrites en toutes lettres.
   const g = (reglages.glossaire || []).filter((x) => x.terme && x.definition);
@@ -226,19 +229,17 @@ function discussionLlamafile() {
 
 // Zone qui reçoit la dictée dans chaque onglet. L'interface de discussion de llamafile (mode complet)
 // est sur une autre origine : la dictée y est copiée dans le presse-papier.
+// La cible de l'espace de travail est définie par travail.js (dernier champ utilisé).
 const vues = {
-  redaction: { cibleDictee: () => $('notes') },
+  travail: { cibleDictee: () => null },
   personnaliser: { cibleDictee: () => null },
-  synthese: { cibleDictee: () => ($('sy-dossier').hidden ? null : $('sy-coller')) },
-  anonymisation: { cibleDictee: () => $('an-entree') },
-  historique: { cibleDictee: () => null },
   discussion: { cibleDictee: () => (discussionLlamafile() ? null : $('saisie')) },
 };
-let vueActive = 'redaction';
+let vueActive = 'travail';
 
 // Les réglages (« personnaliser ») s'ouvrent par le bouton ⚙ Réglages, pas par un onglet ;
 // « Retour » ramène à l'outil précédent.
-let vuePrecedente = 'redaction';
+let vuePrecedente = 'travail';
 function afficherVue(nom) {
   if (nom !== 'personnaliser' && vueActive !== 'personnaliser') vuePrecedente = nom;
   if (nom === 'personnaliser' && vueActive !== 'personnaliser') vuePrecedente = vueActive;
@@ -264,7 +265,8 @@ reglagesPrets.then(() => {
   appliquerAffichage();
   let v = reglagesGeneraux().onglet_demarrage;
   if (!v) { try { v = localStorage.getItem('vue'); } catch {} }
-  if (vues[v] && v !== 'personnaliser') afficherVue(v);
+  if (v !== 'discussion') v = 'travail';   // anciens onglets (rédaction, synthèse…) regroupés dans les dossiers
+  afficherVue(v);
 });
 document.addEventListener('reglages-modifies', appliquerAffichage);
 
@@ -449,7 +451,7 @@ async function lireDocument(f, options = {}) {
   throw new Error('format non pris en charge (images, PDF ou texte).');
 }
 
-// --- Passerelle : appels JSON et archivage des documents produits ---
+// --- Passerelle : appels JSON ---
 async function passerelleJson(chemin, { methode = 'GET', corps } = {}) {
   const rep = await fetch(`http://127.0.0.1:${config.dictee}${chemin}`, {
     method: methode, cache: 'no-store',
@@ -466,16 +468,4 @@ async function passerelleJson(chemin, { methode = 'GET', corps } = {}) {
 function maintenant() {
   const d = new Date(), z = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
-}
-
-// Enregistre un document produit dans donnees/archives (disque chiffré). Renvoie le nom du fichier,
-// à repasser pour mettre à jour la même archive (ex. discussion qui continue). Mode complet seulement.
-async function archiver(type, titre, donnees, fichier) {
-  await reglagesPrets;
-  if (config.mode !== 'complet' || reglages.archivage === false) return null;
-  try {
-    const chemin = fichier ? `/archiver?fichier=${encodeURIComponent(fichier)}` : `/archiver?type=${type}`;
-    const r = await passerelleJson(chemin, { methode: 'POST', corps: { type, titre: String(titre || '').slice(0, 120), date: maintenant(), donnees } });
-    return r.fichier;
-  } catch (e) { console.warn('archivage impossible', e); return null; }
 }

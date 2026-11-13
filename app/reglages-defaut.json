@@ -1,6 +1,6 @@
 {
   "general": {
-    "onglet_demarrage": "redaction",
+    "onglet_demarrage": "travail",
     "theme": "auto",
     "taille_texte": 100,
     "touche_dictee": "F2",
@@ -10,6 +10,7 @@
     "supprimer_audio": false,
     "conservation_mois": 0
   },
+  "contexte_general": "",
   "signature": {
     "nom": "",
     "service": "Service de neurologie",
@@ -26,7 +27,6 @@
     "threads": 0,
     "vocabulaire": "Consultation de neurologie."
   },
-  "archivage": true,
   "discussion": {
     "interface": "llamafile"
   },

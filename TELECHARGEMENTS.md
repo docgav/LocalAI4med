@@ -61,7 +61,7 @@ Si les deux versions sont dans `ressources\`, `Demarrer.bat` propose de choisir.
 
 ### Facultatif : lecture des images (fichiers mmproj)
 
-Pour envoyer des images à l'IA (onglets Discussion et Synthèse patient), il faut le « projecteur » du modèle.
+Pour envoyer des images à l'IA (dossiers et discussion), il faut le « projecteur » du modèle.
 1. Dans le même dépôt Hugging Face que le modèle, téléchargez le fichier dont le nom commence par
    **`mmproj`** (prendre la version `F16` ou `Q8_0` si plusieurs sont proposées).
 2. Renommez-le `mmproj-E2B.gguf` (ou `mmproj-E4B.gguf` pour la version E4B) et placez-le dans `ressources\`.

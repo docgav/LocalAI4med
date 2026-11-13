@@ -1,6 +1,7 @@
-// Onglet Personnaliser : réglages, modèles de documents, formulations types, dictionnaire de transcription et
-// glossaire. Enregistrés par la passerelle dans ressources\ (reglages.json, prompts\), donc conservés
-// lors des mises à jour. Aucune donnée patient ici : uniquement des préférences et des textes types.
+// Réglages (bouton ⚙) : options générales, contexte général (pré-prompt), signature, modèles de documents,
+// abréviations, formulations types, transcription et données. Enregistrés par la passerelle dans
+// ressources\ (reglages.json, prompts\), donc conservés lors des mises à jour. Aucune donnée patient ici :
+// uniquement des préférences et des textes types.
 'use strict';
 
 {
@@ -62,7 +63,7 @@
 
   function remplir(r) {
     const s = r.signature || {}, red = r.redaction || {}, tr = r.transcription || {}, di = r.discussion || {}, ge = r.general || {};
-    $('r-onglet').value = ge.onglet_demarrage || 'redaction';
+    $('r-onglet').value = ge.onglet_demarrage === 'discussion' ? 'discussion' : 'travail';
     $('r-theme').value = ge.theme || 'auto';
     $('r-taille').value = String(ge.taille_texte || 100);
     $('r-touche').value = ge.touche_dictee || 'F2';
@@ -77,7 +78,7 @@
     $('r-temperature').value = red.temperature ?? 0.3;
     $('r-longueur').value = red.longueur_max ?? 2048;
     $('r-reflexion').checked = red.afficher_reflexion !== false;
-    $('r-archivage').checked = r.archivage !== false;
+    $('r-contexte').value = r.contexte_general || '';
     $('r-rapide').checked = tr.rapide !== false;
     $('r-fenetre').checked = !!tr.fenetre_adaptee;
     $('r-threads').value = tr.threads || 0;
@@ -118,7 +119,7 @@
         vocabulaire: $('r-vocabulaire').value.trim(),
       },
       discussion: { interface: choix ? choix.value : 'llamafile' },
-      archivage: $('r-archivage').checked,
+      contexte_general: $('r-contexte').value.trim(),
       general: {
         onglet_demarrage: $('r-onglet').value, theme: $('r-theme').value, taille_texte: Number($('r-taille').value),
         touche_dictee: $('r-touche').value, insertion_dictee: $('r-insertion').value, copie_auto: $('r-copie-auto').checked,

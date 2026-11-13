@@ -26,109 +26,116 @@ de posologie, normalement signalée par `[À PRÉCISER]`).
      **fenêtre InPrivate** d'Edge.
 2. **Gardez la fenêtre noire ouverte** pendant toute la session.
 3. En fin de session : taper **`Q`** puis Entrée dans la fenêtre noire. Cela arrête l'IA, efface les
-   fichiers temporaires et vide le presse-papier. Les enregistrements audio et les documents conservés
-   (§ 5) ne sont pas effacés, sauf réglage contraire.
+   fichiers temporaires et vide le presse-papier. Les dossiers et les enregistrements audio (§ 5) ne sont
+   pas effacés, sauf réglage contraire.
 
 **Mode complet ou mode secours** (indiqué dans la fenêtre noire). Le mode complet utilise une petite
 passerelle PowerShell locale. Si PowerShell est bloqué sur le poste, le **mode secours** démarre
-automatiquement : rédaction et discussion intégrée disponibles, mais pas la dictée dans la page (dictée
-de secours dans la fenêtre noire : `Entrée` pour commencer, `q` pour arrêter), ni la synthèse patient,
-l'historique, l'enregistrement des réglages et les raccourcis clavier.
+automatiquement : le brouillon (§ 4.1) et la discussion intégrée fonctionnent, mais rien n'est enregistré
+(pas de dossiers, ni de réglages sur le disque), et il n'y a ni dictée dans la page (dictée de secours
+dans la fenêtre noire : `Entrée` pour commencer, `q` pour arrêter) ni raccourcis clavier.
 
-## 3. Barre du haut (commune à tous les onglets)
+## 3. Barre du haut
 
-- **🎙 Dicter** (ou `F2`, touche modifiable dans les réglages) : enregistre le micro ; **Arrêter** (même touche) lance la transcription. Le temps
-  restant est affiché. Le texte s'insère (au curseur, ou à la fin selon le réglage) dans la zone de saisie de l'onglet affiché (ou est copié dans le
-  presse-papier s'il n'y en a pas : il suffit alors de coller avec `Ctrl+V`).
+- **Dossiers** (espace de travail, § 4.1) et **Discussion** (§ 4.2) ; **⚙ Réglages** (§ 4.3).
+- **🎙 Dicter** (ou `F2`, touche modifiable dans les réglages) : enregistre le micro ; **Arrêter** (même
+  touche) lance la transcription. Le temps restant est affiché. Le texte s'insère dans le dernier champ
+  utilisé (par défaut, la zone de notes du dossier), au curseur ou à la fin selon le réglage. S'il n'y a
+  pas de champ (interface de discussion de llamafile), il est copié dans le presse-papier : coller avec `Ctrl+V`.
   - Au premier usage de la session, le navigateur demande l'autorisation du micro : accepter.
   - **▶** réécoute le dernier enregistrement ; **Réessayer** relance la transcription du même fichier.
   - **Fichier audio…** transcrit un enregistrement existant (wav, mp3, m4a, ogg…).
-  - Les corrections du dictionnaire de transcription (§ 4.6) sont appliquées au texte.
+  - Les corrections du dictionnaire de transcription (§ 4.3) sont appliquées au texte.
 - **Modèles ▾** : changer de modèle sans redémarrer.
   - *Rédaction / discussion* (fichiers `.gguf` de `ressources\`) : choisir puis **Charger** (environ une
     minute ; images disponibles si le fichier mmproj correspondant est présent).
   - *Transcription* (fichiers `ggml*.bin`) : pris en compte dès la dictée suivante.
-- En haut à droite : modèle chargé et « (images) » s'il accepte les images, puis **⚙ Réglages** (§ 4.6) ;
-  **← Retour** (ou un nouveau clic sur ⚙) ramène à l'onglet précédent.
+- À droite : modèle chargé et « (images) » s'il accepte les images.
 
 ## 4. Les onglets
 
-### 4.1 Rédaction
-1. Dicter ou taper les notes.
-2. Choisir le type de document (courrier, compte rendu, ordonnance, demande d'IRM, certificat…).
-3. **Rédiger** (`Ctrl+Entrée`). La page affiche la phase en cours, la **réflexion du modèle** s'il en
-   produit (cadre repliable) et les **statistiques** (tokens lus, tokens rédigés, vitesse).
-4. Corriger le texte à la main, ou donner une consigne (« plus court »…) puis **Modifier** ;
-   **Version précédente** annule la dernière modification.
-5. **Copier**, puis coller dans le DPI.
+### 4.1 Dossiers (espace de travail)
+Une seule fenêtre de travail, en trois colonnes.
 
-La signature, le glossaire et les formulations types (§ 4.6) sont pris en compte automatiquement :
-par exemple, « ROT vifs mais reste de l'examen neuro normal » donne un examen neurologique complet
-où seuls les réflexes sont décrits comme vifs.
+**À gauche : la liste des dossiers.**
+- **📝 Brouillon** : toujours disponible, pour un travail rapide. Rien n'est enregistré : son contenu est
+  perdu à la fermeture de la page. **Enregistrer comme dossier** le transforme en dossier.
+- **+ Nouveau** : crée un dossier, enregistré dans `donnees\patients\`. Libellé de préférence non
+  identifiant (initiales, chambre, date). Recherche par libellé.
+
+**Au centre : le contenu du dossier.**
+1. Zone de saisie : **notes libres** tapées ou **dictées**, ou **texte collé** (compte rendu, biologie…),
+   avec un titre facultatif. **Ajouter au dossier** en fait un élément. On peut aussi coller une image,
+   ajouter des **Fichiers…** (PDF, images, texte) ou les glisser dans la colonne. Une note dictée garde
+   son enregistrement : bouton **▶** pour le réécouter.
+2. Chaque élément peut être **décoché** pour ne pas être utilisé. La page indique la place occupée dans
+   la mémoire du modèle.
+3. **Relire** : cliquer sur le texte d'un élément l'affiche en entier (**Tout déplier** pour tous) ;
+   **Lire** l'ouvre en grand dans une liseuse, où il peut être corrigé (◀ ▶ pour passer d'un élément à
+   l'autre ; la dictée s'y insère aussi).
+4. **Depuis un autre logiciel** (DPI, résultats, imagerie) :
+   - sélectionner du texte puis **`Ctrl+Alt+T`** : le texte est ajouté au dossier ouvert ;
+   - **`Ctrl+Alt+P`** : l'outil de capture de Windows s'ouvre ; la zone sélectionnée est ajoutée.
+   Une bulle confirme l'envoi (icône dans la zone de notification).
+
+**À droite : les créations**, à partir des éléments cochés. Un texte resté dans la zone de saisie est
+d'abord ajouté au dossier. `Ctrl+Entrée` lance l'outil choisi.
+- **Synthèse** : résumé, antécédents, histoire chronologique, traitements, examens, problèmes actifs,
+  points à vérifier. Le modèle cite ses sources ([Élément 2]). Consignes complémentaires possibles.
+- **Document** : compte rendu, courrier, ordonnance, demande d'IRM, certificat… selon les modèles de
+  documents (§ 4.3). Avec un seul élément coché (par exemple une dictée), il est traité comme les notes
+  des exemples du modèle ; avec plusieurs, comme un dossier.
+- **Question** : question libre sur le dossier.
+- **Anonymisation** : voir ci-dessous.
+
+Le résultat s'affiche en direct (phase, **réflexion du modèle** s'il en produit, statistiques). Il est
+**modifiable** et enregistré dans le dossier (**Créations du dossier**). **Modifier** applique une
+consigne (« plus court »…), **Version précédente** l'annule, **Lire en grand** ouvre la liseuse,
+**Copier** puis coller dans le DPI, **Ajouter aux éléments** permet de réutiliser le résultat (par exemple
+une synthèse) pour une autre création.
+
+Le contexte général, la signature, le glossaire et les formulations types (§ 4.3) sont pris en compte
+automatiquement : par exemple, « ROT vifs mais reste de l'examen neuro normal » donne un examen
+neurologique complet où seuls les réflexes sont décrits comme vifs.
+
+Les images ne sont utilisables qu'avec le fichier mmproj ; au plus les 4 dernières sont envoyées.
+Si le dossier est trop long pour la mémoire du modèle : décocher des éléments ou augmenter `CONTEXTE`.
+
+**Anonymisation** (des éléments texte cochés) :
+1. Saisir nom, prénom(s), date de naissance, et d'autres éléments à masquer (proches, adresse,
+   n° de dossier…), un par ligne. **Détecter avec l'IA** ajoute à cette liste les noms, lieux et
+   identifiants repérés par le modèle : à vérifier.
+2. **Anonymiser** : les éléments deviennent des jetons : `[NOM]`, `[PRENOM]`, `[DATE_NAISSANCE]`,
+   `[MASQUE_1]`, `[EMAIL_1]`, `[TELEPHONE_1]`, `[NIR_1]` et, si la case est cochée, `[DATE_1]`… (les dates
+   d'examen sont gardées par défaut). Les variantes de casse et d'accents sont reconnues (LEFEVRE, Lefèvre).
+   La liste des remplacements s'affiche sous le résultat.
+3. Le texte anonymisé commence par son identifiant `[ANON-AAAAMMJJ-HHMMSS]` ; la table de correspondance
+   est enregistrée dans `donnees\anonymisation\`.
+4. **Désanonymiser un texte** : coller dans le cadre « Résultat » un texte contenant les jetons et
+   l'identifiant (par exemple retravaillé ailleurs), puis **Rétablir le résultat**.
+
+La détection automatique n'est pas infaillible : **relire le texte anonymisé avant de le diffuser.**
 
 ### 4.2 Discussion
 Par défaut, **l'interface de discussion de llamafile**, préréglée en français pour la neurologie :
 historique, pièces jointes (PDF, images, texte), modification et régénération des réponses.
 - Cette interface n'existe **qu'en anglais** (le modèle répond en français). Pour une interface en
-  français, plus simple : ⚙ Réglages → Général → Discussion → « Interface intégrée ».
+  français, plus simple, qui reçoit directement la dictée et le contexte général : ⚙ Réglages → Général
+  → Discussion → « Interface intégrée ».
 - La dictée y est copiée dans le presse-papier : coller avec `Ctrl+V`.
-- Son historique est effacé à la fermeture de la fenêtre InPrivate ; seule la discussion intégrée est
-  conservée dans l'Historique.
+- Les discussions ne sont pas enregistrées (effacées à la fermeture de la fenêtre InPrivate).
 
-### 4.3 Synthèse patient
-Un **dossier par patient**, qui réunit des éléments et les productions du modèle.
-1. **Nouveau** : donner un libellé (de préférence non identifiant : initiales, chambre, date).
-2. Ajouter des éléments : coller du texte (**Ajouter le texte**), coller une image, **Ajouter des
-   fichiers…** (PDF, images, texte) ou glisser-déposer. Chaque élément peut être décoché pour ne pas être
-   envoyé au modèle. La page indique la place occupée dans la mémoire du modèle.
-3. **Depuis un autre logiciel** (DPI, résultats, imagerie) :
-   - sélectionner du texte puis **`Ctrl+Alt+T`** : le texte est envoyé dans le dossier ouvert ;
-   - **`Ctrl+Alt+P`** : l'outil de capture de Windows s'ouvre ; la zone sélectionnée est envoyée.
-   Une bulle confirme l'envoi (icône dans la zone de notification). Si aucun dossier n'est ouvert, les
-   éléments attendent dans la page.
-4. Outils : **Synthèse de l'histoire** (antécédents, histoire chronologique, traitements, examens,
-   problèmes actifs, points à vérifier), **questions** sur le dossier, **rédaction** d'un document du
-   type choisi à partir du dossier. Le modèle cite ses sources ([Élément 2]). Les productions sont
-   gardées dans le dossier.
-
-Les images ne sont utilisables qu'avec le fichier mmproj ; au plus les 4 dernières sont envoyées.
-Si le dossier est trop long pour la mémoire du modèle : décocher des éléments ou augmenter `CONTEXTE`.
-
-### 4.4 Anonymisation
-1. Saisir nom, prénom(s), date de naissance, et d'autres éléments à masquer (proches, adresse,
-   n° de dossier…), un par ligne. **Détecter avec l'IA** ajoute à cette liste les noms, lieux et
-   identifiants repérés par le modèle : à vérifier.
-2. Coller le texte ou **Ouvrir un fichier** (texte ou PDF), puis **Anonymiser**.
-   Les éléments deviennent des jetons : `[NOM]`, `[PRENOM]`, `[DATE_NAISSANCE]`, `[MASQUE_1]`,
-   `[EMAIL_1]`, `[TELEPHONE_1]`, `[NIR_1]` et, si la case est cochée, `[DATE_1]`… (les dates d'examen sont
-   gardées par défaut). Les variantes de casse et d'accents sont reconnues (LEFEVRE, Lefèvre).
-3. Le texte anonymisé commence par son identifiant `[ANON-AAAAMMJJ-HHMMSS]` ; la table de correspondance
-   est enregistrée dans `donnees\anonymisation\`.
-4. **Désanonymiser** : coller un texte contenant les jetons et l'identifiant (par exemple un texte
-   retravaillé ailleurs) ; les valeurs d'origine sont rétablies.
-
-La détection automatique n'est pas infaillible : **relire le texte anonymisé avant de le diffuser.**
-
-### 4.5 Historique
-Tous les documents produits, enregistrés automatiquement : rédactions (avec les notes et chaque
-version), transcriptions, discussions de l'interface intégrée, productions de la synthèse patient,
-textes anonymisés. Filtre par type, recherche dans le contenu, **Copier le document**, **Reprendre dans
-Rédaction**, **Supprimer**. Pour une transcription, l'enregistrement audio peut être réécouté tant qu'il
-est conservé.
-
-### 4.6 ⚙ Réglages (bouton en haut à droite)
-Ce n'est pas un onglet : le bouton ouvre les réglages, **← Retour** ramène à l'outil en cours.
-Tout est enregistré dans `ressources\` (`reglages.json`, dossier `prompts\`), donc conservé lors des
-mises à jour. Bouton **Enregistrer les réglages** en bas.
+### 4.3 ⚙ Réglages
+Le bouton ouvre les réglages, **← Retour** ramène à l'onglet en cours. Tout est enregistré dans
+`ressources\` (`reglages.json`, dossier `prompts\`), donc conservé lors des mises à jour. Bouton
+**Enregistrer les réglages** en bas.
 - **Général** : onglet affiché au démarrage, thème (automatique, clair, sombre), taille du texte,
   touche de dictée (F2 à F10), insertion de la dictée (au curseur ou à la fin), copie automatique du
-  document rédigé, confirmation avant d'effacer, interface de discussion.
-- **Rédaction et signature** : signature des courriers (remplace `[NOM]`, `[HÔPITAL]` et le service dans
-  les modèles), créativité et longueur de la rédaction, affichage de la réflexion.
-- **Transcription** : options de whisper (§ 7).
-- **Données** : conservation automatique des documents, suppression des enregistrements audio à
-  l'arrêt (désactivée par défaut), durée de conservation (au-delà, les documents et enregistrements
-  plus anciens sont supprimés au démarrage ; « illimitée » par défaut).
+  document rédigé, confirmation avant de retirer un élément, interface de discussion.
+- **Contexte général et signature** : **contexte général (pré-prompt)**, texte libre transmis au modèle
+  à chaque demande (votre activité, vos destinataires, votre style ; à garder court) ; signature des
+  courriers (remplace `[NOM]`, `[HÔPITAL]` et le service dans les modèles) ; créativité et longueur de la
+  rédaction ; affichage de la réflexion.
 - **Modèles de documents** : modifier un modèle (votre version remplace l'originale, qui reste
   récupérable), en créer un, modifier les consignes communes (`_commun.txt`). Format :
   ```
@@ -146,37 +153,38 @@ mises à jour. Bouton **Enregistrer les réglages** en bas.
   texte, par exemple des comptes rendus d'hospitalisation). Le modèle analyse chacun, en déduit un modèle
   général (rubriques, style, formules d'usage), peut créer un exemple fictif, et relève les abréviations
   (→ glossaire) et les termes spécialisés (→ vocabulaire de la transcription). Relire le modèle proposé
-  (aucune donnée de patient ne doit y rester), puis l'enregistrer. Les documents fournis ne sont ni
-  enregistrés ni archivés. Compter environ une minute par document.
+  (aucune donnée de patient ne doit y rester), puis l'enregistrer. Les documents fournis ne sont pas
+  enregistrés. Compter environ une minute par document.
+- **Abréviations (glossaire)** : abréviations du service, transmises au modèle pour comprendre les notes.
+  Case **« utilisable »** : cochée, le modèle peut écrire l'abréviation dans le document (IRM) ; décochée,
+  il l'écrit toujours en toutes lettres (SEP → sclérose en plaques).
 - **Formulations types** : textes types transmis au modèle (ex. « examen neurologique normal » → examen
   complet). Vos notes restent telles quelles ; quand elles y font référence, même en abrégé ou avec des
   exceptions (« ROT vifs mais reste de l'examen normal »), le modèle rédige le texte type en l'adaptant.
   À vérifier à la relecture : un petit modèle peut oublier une exception. Gardez les textes courts.
-- **Dictionnaire de transcription** : corrige ce que Whisper comprend mal (« natalisumab » → « natalizumab ») ;
-  les formes correctes lui sont aussi données comme vocabulaire.
-- **Glossaire** : abréviations du service, transmises au modèle pour comprendre les notes. Case
-  **« utilisable »** : cochée, le modèle peut écrire l'abréviation dans le document (IRM) ; décochée, il
-  l'écrit toujours en toutes lettres (SEP → sclérose en plaques).
+- **Transcription** : options de whisper (§ 7) et **dictionnaire de transcription**, qui corrige ce que
+  Whisper comprend mal (« natalisumab » → « natalizumab ») ; les formes correctes lui sont aussi données
+  comme vocabulaire.
+- **Données** : suppression des enregistrements audio à l'arrêt (désactivée par défaut), durée de
+  conservation des enregistrements (au-delà, ils sont supprimés au démarrage ; « illimitée » par défaut).
 
 ## 5. Données enregistrées et confidentialité
 
 | Où | Quoi | Effacé ? |
 |---|---|---|
-| `donnees\archives\` | documents produits (onglet Historique) | non (suppression à la main dans l'Historique) |
-| `donnees\patients\` | dossiers de la synthèse patient | non (bouton « Supprimer le dossier ») |
+| `donnees\patients\` | dossiers : éléments et créations | non (bouton « Supprimer le dossier ») |
+| `donnees\audio\` | enregistrements des dictées (réécoute depuis les éléments) | non, sauf réglage « Données » |
 | `donnees\anonymisation\` | tables de correspondance (permettent de réidentifier) | non |
-| `donnees\audio\` | enregistrements des dictées (réécoute dans l'Historique) | non, sauf réglage « Données » |
+| `donnees\archives\` | documents des versions précédentes (onglet Historique supprimé) | selon la durée de conservation |
 | `dictees\` | fichiers temporaires de la dictée de secours | à l'arrêt |
 | `app\dictee\` | dernière transcription de la dictée de secours | à l'arrêt |
 | `journal\` | journaux techniques (durées, erreurs), **sans texte dicté** | non |
-| navigateur | rien de patient (fenêtre InPrivate) ; seuls quelques réglages d'affichage | à la fermeture |
+| navigateur | brouillon en mémoire seulement ; quelques réglages d'affichage (fenêtre InPrivate) | à la fermeture |
 
 - Le dossier **`donnees\` contient des données de santé** : il doit rester sur le disque chiffré, ne
   jamais être copié sur un poste ni une messagerie. Les tables d'anonymisation sont aussi sensibles que
   les documents d'origine.
-- La conservation automatique, la suppression de l'audio et la durée de conservation se règlent dans
-  ⚙ Réglages → Données (les dossiers patients et les tables d'anonymisation restent enregistrés,
-  puisque c'est leur fonction).
+- Pour un travail sans rien enregistrer, utiliser le **Brouillon**.
 - Ce stockage doit figurer dans le dossier de validation (DSI/RSSI, registre RGPD du service).
 
 ## 6. Mettre à jour
@@ -228,8 +236,8 @@ IA/
 ├── Demarrer.bat / Arreter.bat   démarrage (fenêtre noire) et arrêt
 ├── config.bat                   réglages techniques (surchargés par ressources\config_perso.bat)
 ├── ressources/      *  programmes, modèles, réglages et modèles de documents personnels (TELECHARGEMENTS.md)
-├── donnees/         *  documents conservés : archives, audio, dossiers patients, tables d'anonymisation
-├── app/                page de l'IA (onglets), prompts/ (modèles de documents d'origine),
+├── donnees/         *  données conservées : dossiers, audio des dictées, tables d'anonymisation
+├── app/                page de l'IA (dossiers, discussion, réglages), prompts/ (modèles de documents d'origine),
 │                       discussion-config.json (préréglages de la discussion), lib/pdfjs (lecture des PDF)
 ├── scripts/            dictee-serveur.ps1 (passerelle), capteur.ps1 (raccourcis clavier),
 │                       serveur.bat, arrêt et nettoyage, dictée de secours (dictee.bat, micro.ps1)

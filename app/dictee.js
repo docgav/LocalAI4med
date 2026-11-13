@@ -1,6 +1,6 @@
 // Dictée intégrée : enregistre le micro dans le navigateur, convertit en WAV 16 kHz mono et l'envoie
 // à la passerelle locale (scripts/dictee-serveur.ps1), qui sauvegarde le fichier dans donnees\audio\
-// et le transcrit avec whisperfile. Le texte est inséré dans l'onglet affiché.
+// et le transcrit avec whisper. Le texte est inséré dans le champ utilisé de l'onglet affiché.
 'use strict';
 
 {
@@ -15,7 +15,7 @@
   let dernierAudio = null;   // {wav: Blob, fichier: nom côté passerelle} pour « Réessayer » et « Réécouter »
   let occupe = false;
 
-  function etat(texte) { el.info.textContent = texte; }
+  function etat(texte) { el.info.textContent = texte; el.info.title = texte; }
   // Touche de dictée choisie dans Réglages > Général (F2 par défaut).
   const touche = () => reglagesGeneraux().touche_dictee || 'F2';
   document.addEventListener('reglages-modifies', () => { el.dicter.title = `Dicter (${touche()})`; });
@@ -252,7 +252,8 @@
       clearInterval(minuteur);
       const resultat = await deposerTexte(fin.texte);
       apprendreFacteur(fin.duree_audio, fin.duree);
-      archiver('transcription', fin.texte.slice(0, 80), { texte: fin.texte, audio: fin.fichier, duree_audio: fin.duree_audio });
+      // L'espace de travail rattache l'enregistrement à la note qui reçoit la dictée (réécoute).
+      document.dispatchEvent(new CustomEvent('dictee-transcrite', { detail: { texte: fin.texte, fichier: fin.fichier, duree_audio: fin.duree_audio } }));
       etat(`Dictée ${resultat} – ${formaterDuree(fin.duree_audio)} d'audio transcrites en ${formaterDuree(fin.duree)} – audio : donnees\\audio\\${fin.fichier}`);
     } catch (e) {
       clearInterval(minuteur);
